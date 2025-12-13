@@ -11,7 +11,7 @@ bun run dev
 open http://localhost:3000
 
 ### MVC folder structure example
-
+```
 server/src/
 ├── index.ts                 # App entry point, mounts routes
 ├── db/
@@ -40,3 +40,4 @@ server/src/
     ├── owner.routes.ts
     ├── booking.routes.ts
     └── auth.routes.ts       # Public auth routes
+```
