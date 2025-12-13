@@ -43,7 +43,7 @@ export function useAuth(): AuthState {
 export const signInWithGoogle = (callbackURL: string = "/dashboard") => {
     signIn.social({
         provider: "google",
-        callbackURL: `${process.env.CLIENT_BASE_URL}${callbackURL}`,
+        callbackURL: `${import.meta.env.VITE_CLIENT_BASE_URL}${callbackURL}`,
     });
 };
 
