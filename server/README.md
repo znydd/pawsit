@@ -41,3 +41,24 @@ server/src/
     ├── booking.routes.ts
     └── auth.routes.ts       # Public auth routes
 ```
+
+# Local Database Setup
+## Start Postgres Container 
+```sh
+docker run --name pawsit-postgres --env POSTGRES_PASSWORD=pawsit --publish 5432:5432 --detach postgres
+```
+
+## Status of Postgres Container 
+```sh
+docker ps -a
+```
+
+## Stop and remove Postgres Container 
+```sh
+docker stop pawsit-postgres
+docker rm pawsit-postgres
+```
+## For persistant data in postgres container
+```sh
+docker run --name pawsit-postgres --env POSTGRES_PASSWORD=pawsit --publish 5432:5432 --volume pawsit-postgres-data:/var/lib/postgresql/data --detach postgres
+```
