@@ -1,66 +1,31 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import beaver from "../assets/beaver.svg";
-import { useMutation } from "@tanstack/react-query";
-import type { ApiResponse } from "shared";
-import "../App.css";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
 	component: Index,
 });
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
-
 function Index() {
-	const [data, setData] = useState<ApiResponse | undefined>();
-
-	const { mutate: sendRequest } = useMutation({
-		mutationFn: async () => {
-			const req = await fetch(`${SERVER_URL}/hello`);
-			const res: ApiResponse = await req.json();
-			setData(res);
-		},
-		onError: (err) => console.log(err),
-	});
 
 	return (
-		<>
-			<div>
-				<a
-					href="https://github.com/stevedylandev/bhvr"
-					target="_blank"
-					rel="noopener"
-				>
-					<img src={beaver} className="logo" alt="beaver logo" />
-				</a>
-			</div>
-			<h1>bhvr</h1>
-			<h2>Bun + Hono + Vite + React</h2>
-			<p>A typesafe fullstack monorepo</p>
-			<div className="card">
-				<div className="button-container">
-					<button type="button" onClick={() => sendRequest()}>
-						Call API
-					</button>
-					<a
-						className="docs-link"
-						target="_blank"
-						href="https://bhvr.dev"
-						rel="noopener"
-					>
-						Docs
-					</a>
+		<main className="flex h-screen flex-col items-center justify-center bg-background px-6 overflow-hidden">
+			<div className="flex flex-col items-center justify-center gap-8 text-center max-w-3xl">
+				<div className="space-y-4">
+					<h1 className="font-sans text-5xl md:text-7xl font-medium tracking-tight text-foreground text-balance leading-tight">
+						Your pet's home away from home
+					</h1>
+					<p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
+						Trusted care for your furry friends when you need it most
+					</p>
 				</div>
-				{data && (
-					<pre className="response">
-						<code>
-							Message: {data.message} <br />
-							Success: {data.success.toString()}
-						</code>
-					</pre>
-				)}
+
+				<Link
+					to="/login"
+					className="bg-neutral-900 px-8 py-3 text-lg font-medium text-white rounded-xl shadow-sm hover:shadow-md transition-all"
+				>
+					Log in
+				</Link>
 			</div>
-		</>
+		</main>
 	);
 }
 
