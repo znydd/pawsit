@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { auth } from "@/lib/auth";
 import { sessionMiddleware, type AuthVariables } from "@/middleware/auth.middleware";
 import { apiRoutes } from "@/routes";
+import { errorHandler } from "./middleware/error.middleware";
 
 const app = new Hono<{
   Variables: AuthVariables;
@@ -38,6 +39,7 @@ app.get("/api/session", (c) => {
   return c.json({ success: true, session, user });
 });
 
+app.use("*", errorHandler);
 app.route("/api", apiRoutes);
 
 export default app;
