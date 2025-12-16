@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { createSitter, findSitterByUserId, findOwnerByUserId, updateOwnerIsSitter } from "@/models/sitter.model";
+import { createSitter, findSitterByUserId, findSitterById, findOwnerByUserId, updateOwnerIsSitter } from "@/models/sitter.model";
 
 export const createSitterProfile = async (c: Context) => {
     const user = c.get("user");
@@ -11,9 +11,6 @@ export const createSitterProfile = async (c: Context) => {
     const existingSitter = await findSitterByUserId(user.id);
     if (existingSitter) {
         return c.json({ success: false, message: "Already registered as sitter" }, 400);
-    }
-    if (!existingSitter) {
-        return c.json({ success: false, message: "Sitter profile not found" }, 404);
     }
 
     // Get owner data from pet_owner table
@@ -68,4 +65,44 @@ export const createSitterProfile = async (c: Context) => {
     await updateOwnerIsSitter(user.id);
 
     return c.json({ success: true, sitter }, 201);
+};
+
+// Get sitter profile
+export const getSitterProfile = async (c: Context) => {
+    const user = c.get("user");
+    if (!user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    const sitter = await findSitterByUserId(user.id);
+    if (!sitter) {
+        return c.json({ success: false, message: "Sitter profile not found" }, 404);
+    }
+
+    // Return sitter profile (excluding sensitive fields if needed)
+    return c.json({
+        success: true,
+        sitter: {
+            id: sitter.id,
+            displayName: sitter.displayName,
+            displayImage: sitter.displayImage,
+            phoneNumber: sitter.phoneNumber,
+            headline: sitter.headline,
+            bio: sitter.bio,
+            address: sitter.address,
+            city: sitter.city,
+            latitude: sitter.latitude,
+            longitude: sitter.longitude,
+            experienceYears: sitter.experienceYears,
+            acceptsLargeDogs: sitter.acceptsLargeDogs,
+            acceptsSmallDogs: sitter.acceptsSmallDogs,
+            acceptsCats: sitter.acceptsCats,
+            acceptsFish: sitter.acceptsFish,
+            acceptsBirds: sitter.acceptsBirds,
+            acceptsOtherPets: sitter.acceptsOtherPets,
+            verified: sitter.verified,
+            averageRating: sitter.averageRating,
+            totalReviews: sitter.totalReviews,
+        },
+    });
 };

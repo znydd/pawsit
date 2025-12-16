@@ -13,6 +13,16 @@ export const findSitterByUserId = async (userId: string) => {
     return sitter[0] ?? null;
 };
 
+// Find sitter by ID
+export const findSitterById = async (id: number) => {
+    const sitter = await db
+        .select()
+        .from(petSitterTable)
+        .where(eq(petSitterTable.id, id))
+        .limit(1);
+    return sitter[0] ?? null;
+};
+
 // Create new sitter
 export const createSitter = async (data: Omit<NewPetSitter, 'verified' | 'averageRating' | 'totalReviews'>) => {
     const [sitter] = await db
