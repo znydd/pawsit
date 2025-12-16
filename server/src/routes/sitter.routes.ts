@@ -6,7 +6,7 @@ const sitterRoutes = new Hono();
 // POST /api/sitters/become-sitter
 sitterRoutes.post("/become-sitter", createSitterProfile);
 
-// GET /api/sitters/sitterprofile - View own sitter profile
-sitterRoutes.get("/sitterprofile", getSitterProfile);
+// GET /api/sitters/profile - View own sitter profile
+sitterRoutes.get("/profile", getSitterProfile);
 
 export { sitterRoutes };
