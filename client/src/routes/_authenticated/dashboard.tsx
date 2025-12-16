@@ -1,5 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { signOutUser } from "../../lib/auth";
+import { InitialPopUpForm } from "@/components/InitialPopUpForm";
+import { useOwner, useCreateOwner } from "@/hooks/useOwner";
+import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Search, LogOut, User, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -7,19 +22,113 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { auth } = Route.useRouteContext();
+  // const { data: owner, isPending: isOwnerLoading } = useOwner();
+  const owner = {
+    name: "John Doe",
+    image: "https://via.placeholder.com/150",
+  };
+  const isOwnerLoading = false;
+  const createOwner = useCreateOwner();
+
+  const handleConfirm = (data: { name: string; image: string }) => {
+    createOwner.mutate(data);
+  };
+
+  if (isOwnerLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <Spinner />
+      </div>
+    );
+  }
+
+  const showPopup = !owner;
+
+  // Mock: will come from API later
+  const isSitter = false;
+
+  // Get user info from auth context
+  const userName = auth.user?.name || "User";
+  const userImage = auth.user?.image || "";
+  const userInitials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <main className="h-screen bg-background overflow-hidden">
+      {/* Popup */}
+      {showPopup && <InitialPopUpForm onConfirm={handleConfirm} />}
+
       {/* Header */}
-      <header className="border-b border-border/40 bg-background">
-        <div className="flex items-center justify-between px-8 py-6">
-          <h1 className="text-2xl font-medium tracking-tight text-foreground">PetSit</h1>
-          <button className="px-4 py-2 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-all">
-            <img src={auth.user?.image ?? "Not Image"} alt="avatar" />
-            Profile
-          </button>
+      <header className="border-b border-border/40 bg-background sticky top-0 z-30">
+        <div className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
+          {/* Logo */}
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            PawSit
+          </h1>
+
+          {/* Search Bar */}
+          <div className="flex-1 max-w-md mx-8">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search for sitters, pets..."
+                className="pl-10 h-10 rounded-xl"
+              />
+            </div>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center gap-4">
+            {/* Sitter Button */}
+            <Button variant="outline">
+              {isSitter ? "Sitter Dashboard" : "Become a Sitter"}
+            </Button>
+
+            {/* Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 focus:outline-none">
+                  <span className="text-sm font-medium text-foreground hidden sm:block">
+                    {userName}
+                  </span>
+                  <Avatar className="h-10 w-10 border-2 border-border hover:border-primary/50 transition-all cursor-pointer">
+                    <AvatarImage src={userImage} alt={userName} />
+                    <AvatarFallback>{userInitials}</AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{userName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {auth.user?.email || ""}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOutUser} className="text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <button onClick={signOutUser}>Sign Out</button>
       </header>
 
       {/* Main Content */}
@@ -31,77 +140,6 @@ function Dashboard() {
             <p className="text-muted-foreground">Here's what's happening with your pets today</p>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Stat Card 1 */}
-            <div className="p-8 rounded-2xl border border-border/40 bg-background hover:border-border transition-all">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Active Bookings</p>
-                <p className="text-5xl font-medium tracking-tight text-foreground">3</p>
-              </div>
-            </div>
-
-            {/* Stat Card 2 */}
-            <div className="p-8 rounded-2xl border border-border/40 bg-background hover:border-border transition-all">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Total Pets</p>
-                <p className="text-5xl font-medium tracking-tight text-foreground">2</p>
-              </div>
-            </div>
-
-            {/* Stat Card 3 */}
-            <div className="p-8 rounded-2xl border border-border/40 bg-background hover:border-border transition-all">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Hours Booked</p>
-                <p className="text-5xl font-medium tracking-tight text-foreground">24</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="space-y-6">
-            <h3 className="text-2xl font-medium tracking-tight text-foreground">Recent Activity</h3>
-            <div className="space-y-4">
-              {/* Activity Item 1 */}
-              <div className="p-6 rounded-xl border border-border/40 bg-background hover:border-border transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground">Booking confirmed for Max</p>
-                    <p className="text-sm text-muted-foreground">Tomorrow at 9:00 AM</p>
-                  </div>
-                  <span className="text-xs px-3 py-1 rounded-full bg-foreground/5 text-foreground font-medium">
-                    Upcoming
-                  </span>
-                </div>
-              </div>
-
-              {/* Activity Item 2 */}
-              <div className="p-6 rounded-xl border border-border/40 bg-background hover:border-border transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground">Bella's sitting completed</p>
-                    <p className="text-sm text-muted-foreground">Yesterday at 6:00 PM</p>
-                  </div>
-                  <span className="text-xs px-3 py-1 rounded-full bg-foreground/5 text-foreground font-medium">
-                    Completed
-                  </span>
-                </div>
-              </div>
-
-              {/* Activity Item 3 */}
-              <div className="p-6 rounded-xl border border-border/40 bg-background hover:border-border transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground">New message from sitter</p>
-                    <p className="text-sm text-muted-foreground">2 days ago</p>
-                  </div>
-                  <span className="text-xs px-3 py-1 rounded-full bg-foreground/5 text-foreground font-medium">
-                    Read
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </main>
