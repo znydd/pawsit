@@ -2,17 +2,17 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 
 interface InitialPopUpFormProps {
-    onConfirm: (data: { name: string; image: string }) => void;
+    onConfirm: (data: { displayName: string; displayImage: string }) => void;
 }
 
 export const InitialPopUpForm = ({ onConfirm }: InitialPopUpFormProps) => {
     const { user } = useAuth();
-    const [name, setName] = useState(user?.name || "");
+    const [displayName, setDisplayName] = useState(user?.name || "");
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (name.trim()) {
-            onConfirm({ name: name.trim(), image: user?.image || "" });
+        if (displayName.trim()) {
+            onConfirm({ displayName: displayName.trim(), displayImage: user?.image || "" });
         }
     };
 
@@ -52,8 +52,8 @@ export const InitialPopUpForm = ({ onConfirm }: InitialPopUpFormProps) => {
                             <input
                                 id="name"
                                 type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                value={displayName}
+                                onChange={(e) => setDisplayName(e.target.value)}
                                 placeholder="Enter your name"
                                 className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                             />
@@ -61,7 +61,7 @@ export const InitialPopUpForm = ({ onConfirm }: InitialPopUpFormProps) => {
 
                         <button
                             type="submit"
-                            disabled={!name.trim()}
+                            disabled={!displayName.trim()}
                             className="w-full py-3 px-4 bg-primary text-primary-foreground font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             Confirm

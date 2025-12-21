@@ -22,16 +22,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { auth } = Route.useRouteContext();
-  // const { data: owner, isPending: isOwnerLoading } = useOwner();
-  const owner = {
-    name: "John Doe",
-    image: "https://via.placeholder.com/150",
-  };
-  const isOwnerLoading = false;
+  const { data: owner, isPending: isOwnerLoading } = useOwner();
   const createOwner = useCreateOwner();
 
-  const handleConfirm = (data: { name: string; image: string }) => {
+  const handleConfirm = (data: { displayName: string; displayImage: string }) => {
+    console.log(data);
     createOwner.mutate(data);
+
   };
 
   if (isOwnerLoading) {
@@ -44,7 +41,6 @@ function Dashboard() {
 
   const showPopup = !owner;
 
-  // Mock: will come from API later
   const isSitter = false;
 
   // Get user info from auth context

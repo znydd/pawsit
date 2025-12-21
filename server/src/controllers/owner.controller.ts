@@ -7,7 +7,6 @@ export const getOwnerProfile = async (c: Context) => {
     if (!user) {
         return c.json({ success: false, message: "Not authenticated" }, 401);
     }
-    console.log(user.id);
 
     const owner = await findOwnerById(user.id);
     if (!owner) {
@@ -17,12 +16,20 @@ export const getOwnerProfile = async (c: Context) => {
     return c.json({ success: true, owner });
 }
 
-export const createOwnerApi = async (c: Context) => {
+
+export const createOwnerProfile = async (c: Context) => {
+    const user = c.get("user");
+    if (!user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
     try {
         const body = await c.req.json();
-
-        // Create new owner
-        const newOwner = await createOwner(body);
+        const newOwner = await createOwner({
+            displayName: body.displayName,
+            displayImage: body.displayImage,
+            userId: user.id,
+        });
 
         return c.json(
             {

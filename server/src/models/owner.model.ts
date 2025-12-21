@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { petOwnerTable } from "shared/src/db/schema";
 import { eq } from "drizzle-orm";
+import type { NewPetOwner } from "shared";
 
 
 export const findOwnerById = async (userId: string) => {
@@ -12,10 +13,10 @@ export const findOwnerById = async (userId: string) => {
     return owner[0] ?? null;
 }
 
-export const createOwner = async (userData: any) => {
-    const newUser = await db
+export const createOwner = async (newOwnerData: NewPetOwner) => {
+    const newOwner = await db
         .insert(petOwnerTable)
-        .values(userData)
+        .values(newOwnerData)
         .returning();
-    return newUser[0] ?? null;
+    return newOwner[0] ?? null;
 }

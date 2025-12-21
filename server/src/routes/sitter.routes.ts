@@ -3,10 +3,11 @@ import { createSitterProfile, getSitterProfile } from "@/controllers/sitter.cont
 
 const sitterRoutes = new Hono();
 
-// POST /api/sitters/become-sitter
-sitterRoutes.post("/become-sitter", createSitterProfile);
-
-// GET /api/sitters/profile - View own sitter profile
+// GET
 sitterRoutes.get("/profile", getSitterProfile);
+
+// POST
+sitterRoutes.post("/profile", createSitterProfile);
+
 
 export { sitterRoutes };
