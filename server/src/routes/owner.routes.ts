@@ -1,11 +1,13 @@
 import { Hono } from "hono";
-import { getOwnerProfile, createOwnerApi } from "@/controllers/owner.controller";
+import { getOwnerProfile, createOwnerProfile } from "@/controllers/owner.controller";
 
 const ownerRoutes = new Hono();
 
+// GET
 ownerRoutes.get("/profile", getOwnerProfile);
-ownerRoutes.post("/create", createOwnerApi);
 
+// POST
+ownerRoutes.post("/profile", createOwnerProfile);
 
 
 export { ownerRoutes };
