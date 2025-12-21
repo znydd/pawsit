@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { petSitterTable, petOwnerTable } from "@/db/schema";
+import { petSitterTable, petOwnerTable } from "shared/src/db/schema";
 import { eq } from "drizzle-orm";
 import type { NewPetSitter } from "shared/dist";
 

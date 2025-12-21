@@ -178,4 +178,3 @@ export const notificationTable = pgTable("notification", {
         .$onUpdate(() => /* @__PURE__ */ new Date())
         .notNull(),
 });
-
