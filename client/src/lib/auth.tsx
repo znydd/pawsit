@@ -1,11 +1,11 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useSession, signIn, signOut } from "./auth-client";
-import type { User, Session } from "shared/dist";
+import type { NewUser, NewSession } from "shared";
 
 export interface AuthState {
     isAuthenticated: boolean;
-    user: User | null;
-    session: Session | null;
+    user: NewUser | null;
+    session: NewSession | null;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
