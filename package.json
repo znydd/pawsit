@@ -35,6 +35,9 @@
     "monorepo",
     "turbo"
   ],
+  "dependencies": {
+    "drizzle-orm": "^0.45.0"
+  },
   "devDependencies": {
     "bun-types": "latest",
     "turbo": "^2.6.1"
