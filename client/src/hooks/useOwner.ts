@@ -6,6 +6,7 @@ export const useOwner = () => {
     const query = useQuery({
         queryKey: ['owner'],
         queryFn: ownerApi.getOwner,
+        retry: false,
     });
     return query;
 };
