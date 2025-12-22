@@ -1,20 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { signOutUser } from "../../lib/auth";
-import { InitialPopUpForm } from "@/components/InitialPopUpForm";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useOwner, useCreateOwner } from "@/hooks/useOwner";
 import { Spinner } from "@/components/ui/spinner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Search, LogOut, User, Settings } from "lucide-react";
+import { InitialPopUpForm } from "@/components/InitialPopUpForm";
+
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { Header } from "@/components/dashboard/Header";
+import { FindSitters } from "@/components/dashboard/FindSitters";
+import { MyRequests } from "@/components/dashboard/MyRequests";
+import { Inbox } from "@/components/dashboard/Inbox";
+import { Settings } from "@/components/dashboard/Settings";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -24,11 +19,10 @@ function Dashboard() {
   const { auth } = Route.useRouteContext();
   const { data: owner, isPending: isOwnerLoading } = useOwner();
   const createOwner = useCreateOwner();
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   const handleConfirm = (data: { displayName: string; displayImage: string }) => {
-    console.log(data);
     createOwner.mutate(data);
-
   };
 
   if (isOwnerLoading) {
@@ -40,104 +34,48 @@ function Dashboard() {
   }
 
   const showPopup = !owner;
+  const isSitter = !!owner?.isSitter;
 
-  const isSitter = owner?.isSitter;
-
-  // Get user info from auth context
-  const userName = auth.user?.name || "User";
-  const userImage = auth.user?.image || "";
+  const userName = owner?.displayName || auth.user?.name || "User";
+  const userImage = owner?.displayImage || auth.user?.image || "";
   const userInitials = userName
     .split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
 
+  const renderSection = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return <FindSitters />;
+      case "requests":
+        return <MyRequests setActiveTab={setActiveTab} />;
+      case "messages":
+        return <Inbox />;
+      case "profile":
+        return <Settings owner={owner} user={auth.user} createOwner={createOwner} />;
+      default:
+        return <FindSitters />;
+    }
+  };
+
   return (
-    <main className="h-screen bg-background overflow-hidden">
-      {/* Popup */}
+    <main className="flex h-screen bg-background text-foreground overflow-hidden">
       {showPopup && <InitialPopUpForm onConfirm={handleConfirm} />}
 
-      {/* Header */}
-      <header className="border-b border-border/40 bg-background sticky top-0 z-30">
-        <div className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
-          {/* Logo */}
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">
-            PawSit
-          </h1>
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isSitter={isSitter} />
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search for sitters, pets..."
-                className="pl-10 h-10 rounded-xl"
-              />
-            </div>
-          </div>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <Header
+          activeTab={activeTab}
+          userName={userName}
+          userImage={userImage}
+          userInitials={userInitials}
+        />
 
-          {/* Right Section */}
-          <div className="flex items-center gap-4">
-            {/* Sitter Button */}
-            <Link to="/sitter/dashboard">
-              <Button variant="outline">
-                {isSitter ? "Sitter Dashboard" : "Become a Sitter"}
-              </Button>
-            </Link>
-
-            {/* Profile Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 focus:outline-none">
-                  <span className="text-sm font-medium text-foreground hidden sm:block">
-                    {userName}
-                  </span>
-                  <Avatar className="h-10 w-10 border-2 border-border hover:border-primary/50 transition-all cursor-pointer">
-                    <AvatarImage src={userImage} alt={userName} />
-                    <AvatarFallback>{userInitials}</AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{userName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {auth.user?.email || ""}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOutUser} className="text-destructive focus:text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="px-8 py-12">
-        <div className="max-w-7xl mx-auto space-y-12">
-          {/* Welcome Section */}
-          <div className="space-y-2">
-            <h2 className="text-4xl font-medium tracking-tight text-foreground">Welcome back</h2>
-            <p className="text-muted-foreground">Here's what's happening with your pets today</p>
-          </div>
-
+        <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+          {renderSection()}
         </div>
       </div>
     </main>
