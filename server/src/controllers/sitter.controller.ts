@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { createSitter, findSitterByUserId, findOwnerByUserId, updateOwnerIsSitter } from "@/models/sitter.model";
+import { createSitter, findSitterByUserId, findOwnerByUserId, updateOwnerIsSitter, upsertSitterAvailability, findSitterAvailability } from "@/models/sitter.model";
 
 export const createSitterProfile = async (c: Context) => {
     const user = c.get("user");
@@ -110,5 +110,54 @@ export const getSitterProfile = async (c: Context) => {
             averageRating: sitter.averageRating,
             totalReviews: sitter.totalReviews,
         },
+    });
+};
+
+
+// Update sitter availability (Toggle)
+export const updateSitterAvailability = async (c: Context) => {
+    const user = c.get("user");
+    if (!user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    const sitter = await findSitterByUserId(user.id);
+    if (!sitter) {
+        return c.json({ success: false, message: "Sitter profile not found" }, 404);
+    }
+
+    const { isBlocked } = await c.req.json();
+
+    if (isBlocked === undefined) {
+        return c.json({ success: false, message: "isBlocked status is required" }, 400);
+    }
+
+    const availability = await upsertSitterAvailability(sitter.id, isBlocked);
+
+    return c.json({
+        success: true,
+        message: isBlocked ? "You are now UNAVAILABLE to take pets" : "You are now AVAILABLE to take pets",
+        availability
+    });
+};
+
+// Get sitter availability
+export const getSitterAvailability = async (c: Context) => {
+    const user = c.get("user");
+    if (!user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    const sitter = await findSitterByUserId(user.id);
+    if (!sitter) {
+        return c.json({ success: false, message: "Sitter profile not found" }, 404);
+    }
+
+    const availability = await findSitterAvailability(sitter.id);
+
+    // Default to available if no record exists yet
+    return c.json({
+        success: true,
+        availability: availability ?? { isBlocked: false }
     });
 };

@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { petSitterTable, petOwnerTable } from "shared/src/db/schema";
+import { petSitterTable, petOwnerTable, sitterAvailabilityTable } from "shared/src/db/schema";
 import { eq } from "drizzle-orm";
 import type { NewPetSitter } from "shared/dist";
 
@@ -43,4 +43,38 @@ export const updateOwnerIsSitter = async (userId: string) => {
         .update(petOwnerTable)
         .set({ isSitter: true })
         .where(eq(petOwnerTable.userId, userId));
+};
+
+// Find sitter availability
+export const findSitterAvailability = async (sitterId: number) => {
+    const availability = await db
+        .select()
+        .from(sitterAvailabilityTable)
+        .where(eq(sitterAvailabilityTable.sitterId, sitterId))
+        .limit(1);
+    return availability[0] ?? null;
+};
+
+// Update or add sitter availability
+export const upsertSitterAvailability = async (sitterId: number, isBlocked: boolean) => {
+    const existing = await findSitterAvailability(sitterId);
+
+    if (existing) {
+        const [updated] = await db
+            .update(sitterAvailabilityTable)
+            .set({ isBlocked, updatedAt: new Date() })
+            .where(eq(sitterAvailabilityTable.sitterId, sitterId))
+            .returning();
+        return updated;
+    }
+
+    const [inserted] = await db
+        .insert(sitterAvailabilityTable)
+        .values({
+            sitterId,
+            isBlocked,
+            updatedAt: new Date(),
+        })
+        .returning();
+    return inserted;
 };
