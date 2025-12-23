@@ -49,8 +49,8 @@ export const serviceTable = pgTable("service", {
 export const sitterAvailabilityTable = pgTable("sitter_availability", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     sitterId: integer("sitter_id").notNull().references(() => petSitterTable.id),
-    availableFrom: timestamp("available_from").notNull(),
-    availableTo: timestamp("available_to").notNull(),
+    // availableFrom: timestamp("available_from").notNull(),
+    // availableTo: timestamp("available_to").notNull(),
     isBlocked: boolean("is_blocked").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
