@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { petSitterTable, petOwnerTable } from "shared/src/db/schema";
+import { petSitterTable, petOwnerTable, serviceTable } from "shared/src/db/schema";
 import { eq } from "drizzle-orm";
 import type { NewPetSitter } from "shared/dist";
 
@@ -43,4 +43,34 @@ export const updateOwnerIsSitter = async (userId: string) => {
         .update(petOwnerTable)
         .set({ isSitter: true })
         .where(eq(petOwnerTable.userId, userId));
+};
+// Type for creating a new service
+export interface NewService {
+    sitterId: number;
+    name: string;
+    serviceType: string;
+    description: string;
+    pricePerDay: number;
+    isActive?: boolean;
+}
+
+// Create a new service
+export const createServiceRecord = async (data: NewService) => {
+    const [service] = await db
+        .insert(serviceTable)
+        .values({
+            ...data,
+            isActive: data.isActive ?? true,
+            updatedAt: new Date(),
+        })
+        .returning();
+    return service;
+};
+// Find all services by sitter ID
+export const findServicesBySitterId = async (sitterId: number) => {
+    const services = await db
+        .select()
+        .from(serviceTable)
+        .where(eq(serviceTable.sitterId, sitterId));
+    return services;
 };
