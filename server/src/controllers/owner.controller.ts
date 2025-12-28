@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { findOwnerById, createOwner } from "@/models/owner.model";
+import { findOwnerByUserId, createOwner } from "@/models/owner.model";
 
 
 export const getOwnerProfile = async (c: Context) => {
@@ -8,7 +8,7 @@ export const getOwnerProfile = async (c: Context) => {
         return c.json({ success: false, message: "Not authenticated" }, 401);
     }
 
-    const owner = await findOwnerById(user.id);
+    const owner = await findOwnerByUserId(user.id);
     if (!owner) {
         return c.json({ success: false, message: "Owner not found" }, 404);
     }
@@ -29,6 +29,9 @@ export const createOwnerProfile = async (c: Context) => {
             displayName: body.displayName,
             displayImage: body.displayImage,
             userId: user.id,
+            location: body.location
+                ? { x: body.location.longitude, y: body.location.latitude }
+                : { x: 0, y: 0 }, // Default location
         });
 
         return c.json(

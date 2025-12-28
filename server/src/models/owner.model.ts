@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import type { NewPetOwner } from "shared";
 
 
-export const findOwnerById = async (userId: string) => {
+export const findOwnerByUserId = async (userId: string) => {
     const owner = await db
         .select()
         .from(petOwnerTable)
@@ -20,3 +20,11 @@ export const createOwner = async (newOwnerData: NewPetOwner) => {
         .returning();
     return newOwner[0] ?? null;
 }
+
+// Update owner's isSitter flag to true
+export const updateOwnerIsSitter = async (userId: string) => {
+    await db
+        .update(petOwnerTable)
+        .set({ isSitter: true })
+        .where(eq(petOwnerTable.userId, userId));
+};
