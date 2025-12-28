@@ -45,7 +45,7 @@ server/src/
 # Local Database Setup
 ## Start Postgres Container 
 ```sh
-docker run --name pawsit-postgres --env POSTGRES_PASSWORD=pawsit --publish 5432:5432 --detach postgres
+docker run --name pawsit-postgres --env POSTGRES_PASSWORD=pawsit --publish 5432:5432 --detach postgis/postgis
 ```
 
 ## Status of Postgres Container 
@@ -60,5 +60,5 @@ docker rm pawsit-postgres
 ```
 ## For persistant data in postgres container
 ```sh
-docker run --name pawsit-postgres --env POSTGRES_PASSWORD=pawsit --publish 5432:5432 --volume pawsit-postgres-data:/var/lib/postgresql/data --detach postgres
+docker run --name pawsit-postgres --env POSTGRES_PASSWORD=pawsit --publish 5432:5432 --volume pawsit-postgres-data:/var/lib/postgresql/data --detach postgis/postgis
 ```

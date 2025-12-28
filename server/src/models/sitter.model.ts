@@ -1,7 +1,7 @@
 import { db } from "@/db";
-import { petSitterTable, petOwnerTable, serviceTable } from "shared/src/db/schema";
-import { eq } from "drizzle-orm";
-import type { NewPetSitter } from "shared/dist";
+import { petSitterTable, petOwnerTable, serviceTable, sitterAvailabilityTable } from "shared/src/db/schema";
+import { eq, sql, and, ne } from "drizzle-orm";
+import type { NewPetSitter, NewService, NewSitterAvailability } from "shared/src";
 
 // Find sitter by user ID
 export const findSitterByUserId = async (userId: string) => {
@@ -27,32 +27,6 @@ export const createSitter = async (data: Omit<NewPetSitter, 'verified' | 'averag
     return sitter;
 };
 
-// Find owner by user ID
-export const findOwnerByUserId = async (userId: string) => {
-    const owner = await db
-        .select()
-        .from(petOwnerTable)
-        .where(eq(petOwnerTable.userId, userId))
-        .limit(1);
-    return owner[0] ?? null;
-};
-
-// Update owner's isSitter flag to true
-export const updateOwnerIsSitter = async (userId: string) => {
-    await db
-        .update(petOwnerTable)
-        .set({ isSitter: true })
-        .where(eq(petOwnerTable.userId, userId));
-};
-// Type for creating a new service
-export interface NewService {
-    sitterId: number;
-    name: string;
-    serviceType: string;
-    description: string;
-    pricePerDay: number;
-    isActive?: boolean;
-}
 
 // Create a new service
 export const createServiceRecord = async (data: NewService) => {
@@ -66,6 +40,52 @@ export const createServiceRecord = async (data: NewService) => {
         .returning();
     return service;
 };
+
+// Update an existing service
+export const updateServiceRecord = async (
+    serviceId: number,
+    data: Partial<Pick<NewService, 'serviceType' | 'pricePerDay' | 'isActive'>>
+) => {
+    const [service] = await db
+        .update(serviceTable)
+        .set({
+            ...data,
+            updatedAt: new Date(),
+        })
+        .where(eq(serviceTable.id, serviceId))
+        .returning();
+    return service;
+};
+
+// Create sitter availability record
+export const createSitterAvailability = async (data: NewSitterAvailability) => {
+    const [availability] = await db
+        .insert(sitterAvailabilityTable)
+        .values({
+            ...data,
+            updatedAt: new Date(),
+        })
+        .returning();
+    return availability;
+};
+
+// Update sitter availability
+export const patchSitterAvailability = async (
+    sitterId: number,
+    data: Partial<Pick<NewSitterAvailability, 'isAvailable'>>
+) => {
+    const [availability] = await db
+        .update(sitterAvailabilityTable)
+        .set({
+            ...data,
+            updatedAt: new Date(),
+        })
+        .where(eq(sitterAvailabilityTable.sitterId, sitterId))
+        .returning();
+    return availability;
+};
+
+
 // Find all services by sitter ID
 export const findServicesBySitterId = async (sitterId: number) => {
     const services = await db
@@ -73,4 +93,50 @@ export const findServicesBySitterId = async (sitterId: number) => {
         .from(serviceTable)
         .where(eq(serviceTable.sitterId, sitterId));
     return services;
+};
+
+// Find sitters within a specific radius (with JOINs for efficiency)
+export const findSittersInRadius = async (
+    lat: number,
+    lng: number,
+    radiusInMeters: number = 5000,
+    excludeUserId?: string
+    ) => {
+
+    const centerPoint = sql`ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography`;
+    const filters = [
+        sql`ST_DWithin(${petSitterTable.location}, ${centerPoint}, ${radiusInMeters})`,
+        eq(sitterAvailabilityTable.isAvailable, true) // Only available sitters
+    ];
+
+    if (excludeUserId) {
+        filters.push(ne(petSitterTable.userId, excludeUserId));
+    }
+
+    const sitters = await db
+        .select({
+            id: petSitterTable.id,
+            userId: petSitterTable.userId,
+            displayName: petSitterTable.displayName,
+            displayImage: petSitterTable.displayImage,
+            headline: petSitterTable.headline,
+            averageRating: petSitterTable.averageRating,
+            totalReviews: petSitterTable.totalReviews,
+            address: petSitterTable.address,
+            city: petSitterTable.city,
+            location: petSitterTable.location,
+            distance: sql<number>`ST_Distance(${petSitterTable.location}, ${centerPoint})`,
+            // From service table
+            pricePerDay: serviceTable.pricePerDay,
+            serviceType: serviceTable.serviceType,
+            // From availability table
+            isAvailable: sitterAvailabilityTable.isAvailable,
+        })
+        .from(petSitterTable)
+        .leftJoin(serviceTable, eq(petSitterTable.id, serviceTable.sitterId))
+        .leftJoin(sitterAvailabilityTable, eq(petSitterTable.id, sitterAvailabilityTable.sitterId))
+        .where(and(...filters))
+        .orderBy(sql`ST_Distance(${petSitterTable.location}, ${centerPoint})`);
+
+    return sitters;
 };

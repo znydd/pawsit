@@ -1,5 +1,15 @@
 import { user } from "./auth.schema";
-import { pgTable, text, timestamp, boolean, index, integer, doublePrecision, varchar } from "drizzle-orm/pg-core";
+import { 
+    pgTable,
+    text,
+    timestamp,
+    boolean,
+    index,
+    integer,
+    doublePrecision,
+    varchar,
+    geometry
+} from "drizzle-orm/pg-core";
 
 export const petSitterTable = pgTable("pet_sitter", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -11,8 +21,7 @@ export const petSitterTable = pgTable("pet_sitter", {
     bio: varchar("bio"),
     address: varchar("address").notNull(),
     city: varchar("city").notNull(),
-    latitude: doublePrecision("latitude").notNull(),
-    longitude: doublePrecision("longitude").notNull(),
+    location: geometry("location", {type: "Point", mode: "xy", srid: 4326}).notNull(),
     experienceYears: integer("experience_years").default(0).notNull(),
     acceptsLargeDogs: boolean("accepts_large_dogs").default(false).notNull(),
     acceptsSmallDogs: boolean("accepts_small_dogs").default(false).notNull(),
@@ -30,14 +39,13 @@ export const petSitterTable = pgTable("pet_sitter", {
     totalReviews: integer("total_reviews").default(0).notNull(),
 }, (table) => [
     index("pet_sitter_userId_idx").on(table.userId),
+    index("pet_sitter_location_idx").using("gist", table.location),
 ]);
 
 export const serviceTable = pgTable("service", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     sitterId: integer("sitter_id").notNull().references(() => petSitterTable.id),
-    name: varchar("name").notNull(),
     serviceType: varchar("service_type").notNull(),
-    description: varchar("description").notNull(),
     pricePerDay: doublePrecision("price_per_day").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -49,9 +57,8 @@ export const serviceTable = pgTable("service", {
 export const sitterAvailabilityTable = pgTable("sitter_availability", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     sitterId: integer("sitter_id").notNull().references(() => petSitterTable.id),
-    // availableFrom: timestamp("available_from").notNull(),
-    // availableTo: timestamp("available_to").notNull(),
-    isBlocked: boolean("is_blocked").default(false).notNull(),
+    isAvailable: boolean("is_available").default(true).notNull(),
+    isBanned: boolean("is_banned").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .$onUpdate(() => /* @__PURE__ */ new Date())
@@ -79,8 +86,7 @@ export const petOwnerTable = pgTable("pet_owner", {
     bio: varchar("bio"),
     address: varchar("address"),
     city: varchar("city"),
-    latitude: doublePrecision("latitude"),
-    longitude: doublePrecision("longitude"),
+    location: geometry("location", {type: "Point", mode: "xy", srid: 4326}).notNull(),
     isSitter: boolean("is_sitter").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

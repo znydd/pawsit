@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
@@ -10,8 +11,12 @@ const db = drizzle({ client: pool, casing: "snake_case" });
 
 const runMigrations = async () => {
     try {
+        console.log("Ensuring PostGIS extension exists...");
+        await db.execute(sql`CREATE EXTENSION IF NOT EXISTS postgis;`);
+
         console.log("Running migrations...");
         await migrate(db, { migrationsFolder: "./drizzle" });
+
         console.log("Migrations complete!");
     } catch (error) {
         console.error(error);
