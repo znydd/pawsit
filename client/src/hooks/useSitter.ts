@@ -24,3 +24,10 @@ export const useCreateSitter = () => {
     });
     return mutation;
 };
+export const useSearchSitters = (params: { lat: number; lng: number; radius: number } | null) => {
+    return useQuery({
+        queryKey: ['sitters', 'search', params],
+        queryFn: () => sitterApi.searchSitters(params!),
+        enabled: !!params,
+    });
+};

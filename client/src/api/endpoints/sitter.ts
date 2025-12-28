@@ -16,4 +16,9 @@ export const sitterApi = {
             throw error;
         }
     },
+    searchSitters: async (params: { lat: number; lng: number; radius: number }) => {
+        console.log(params);
+        const { data } = await apiClient.get('/sitters/search', { params });
+        return data.sitters;
+    },
 };

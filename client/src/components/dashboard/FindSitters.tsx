@@ -1,17 +1,20 @@
-import { Search, MapPin, Star, Navigation } from "lucide-react";
+import { Search, MapPin, Star, Navigation, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MOCK_SITTERS } from "./dashboard-data";
 import { toast } from "sonner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useSearchSitters } from "@/hooks/useSitter";
 
 export function FindSitters() {
     const [selectedFilters, setSelectedFilters] = useState<string[]>(["All"]);
-    const [selectedRadius, setSelectedRadius] = useState<number | null>(null);
+    const [selectedRadius, setSelectedRadius] = useState<number | null>(5);
+    const [searchParams, setSearchParams] = useState<{ lat: number; lng: number; radius: number } | null>(null);
+
+    const { data: sitters, isLoading } = useSearchSitters(searchParams);
 
     const petFilters = ["All", "Cats", "Dogs", "Fish", "Bird", "Other"];
 
@@ -37,7 +40,30 @@ export function FindSitters() {
             toast.error("Please select a radius first");
             return;
         }
-        toast.info(`Searching for sitters within ${selectedRadius}km of your location...`);
+
+        if (!navigator.geolocation) {
+            toast.error("Geolocation is not supported by your browser");
+            return;
+        }
+
+        toast.info("Getting your location...");
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setSearchParams({
+                    lat: Number(latitude.toFixed(4)),
+                    lng: Number(longitude.toFixed(4)),
+                    radius: selectedRadius * 1000 // Convert km to meters
+                });
+                console.log(searchParams);
+                toast.success("Location retrieved! Searching...");
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                toast.error("Failed to get your location. Please check your browser permissions.");
+            }
+        );
     };
 
     return (
@@ -88,8 +114,9 @@ export function FindSitters() {
                         <Button
                             className="h-10 px-6 gap-2 font-bold shadow-sm w-full"
                             onClick={handleLocationSearch}
+                            disabled={isLoading}
                         >
-                            <Navigation className="w-4 h-4" />
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
                             Use My Location
                         </Button>
                     </div>
@@ -113,60 +140,85 @@ export function FindSitters() {
                 </div>
             </div>
 
-            {/* Sitter Grid - Compact version */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {MOCK_SITTERS.map((sitter) => (
-                    <Card key={sitter.id} className="overflow-hidden border-border shadow-none hover:border-primary/30 hover:shadow-md transition-all group flex flex-col">
-                        <div className="h-32 relative overflow-hidden shrink-0">
-                            <img
-                                src={sitter.image}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                alt={sitter.name}
-                            />
-                            {sitter.verified && (
-                                <Badge className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm text-[10px] py-0 h-5 border-none shadow-sm" variant="secondary">
-                                    Verified
-                                </Badge>
-                            )}
-                        </div>
-                        <CardContent className="p-3 flex-1 flex flex-col justify-between">
-                            <div>
-                                <div className="flex justify-between items-start mb-1.5">
-                                    <div className="flex items-center gap-2">
-                                        <Avatar className="w-6 h-6 border shadow-sm">
-                                            <AvatarImage src={sitter.avatar} />
-                                            <AvatarFallback>{sitter.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <h3 className="text-sm font-bold truncate max-w-[100px]">{sitter.name}</h3>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold text-primary leading-none">{sitter.price}৳</p>
-                                        <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">/ day</p>
-                                    </div>
-                                </div>
-
-                                <p className="text-[11px] text-muted-foreground flex items-center gap-1 mb-2 font-medium">
-                                    <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{sitter.location}</span>
-                                </p>
-
-                                <div className="flex items-center gap-1 text-yellow-500 mb-2">
-                                    <Star className="w-3 h-3 fill-current" />
-                                    <span className="text-[11px] font-bold text-foreground">{sitter.rating}</span>
-                                </div>
+            {/* Sitter Grid */}
+            {isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="h-64 rounded-lg bg-secondary/20 animate-pulse border border-border" />
+                    ))}
+                </div>
+            ) : sitters && sitters.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {sitters.map((sitter: any) => (
+                        <Card key={sitter.id} className="overflow-hidden border-border shadow-none hover:border-primary/30 hover:shadow-md transition-all group flex flex-col">
+                            <div className="h-32 relative overflow-hidden shrink-0">
+                                <img
+                                    src={sitter.displayImage || "https://images.unsplash.com/photo-1513360371669-4ada307f933b?auto=format&fit=crop&w=400"}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    alt={sitter.displayName}
+                                />
+                                {sitter.verified && (
+                                    <Badge className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm text-[10px] py-0 h-5 border-none shadow-sm" variant="secondary">
+                                        Verified
+                                    </Badge>
+                                )}
                             </div>
+                            <CardContent className="p-3 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex justify-between items-start mb-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <Avatar className="w-6 h-6 border shadow-sm">
+                                                <AvatarImage src={sitter.displayImage} />
+                                                <AvatarFallback>{sitter.displayName?.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <h3 className="text-sm font-bold truncate max-w-[100px]">{sitter.displayName}</h3>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold text-primary leading-none">
+                                                {sitter.minPrice ? `${sitter.minPrice}৳` : "N/A"}
+                                            </p>
+                                            <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">/ day</p>
+                                        </div>
+                                    </div>
 
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => toast.success(`Request Sent to ${sitter.name}`)}
-                                className="w-full h-8 text-[11px] font-bold uppercase tracking-tight"
-                            >
-                                Book Sitter
-                            </Button>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+                                    <div className="space-y-1 mb-2">
+                                        <p className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
+                                            <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{sitter.city}, {sitter.address}</span>
+                                        </p>
+                                        {sitter.distance !== undefined && (
+                                            <p className="text-[10px] text-primary font-semibold">
+                                                {(sitter.distance / 1000).toFixed(1)} km away
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-1 text-yellow-500 mb-2">
+                                        <Star className="w-3 h-3 fill-current" />
+                                        <span className="text-[11px] font-bold text-foreground">{sitter.averageRating || "New"}</span>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => toast.success(`Request Sent to ${sitter.displayName}`)}
+                                    className="w-full h-8 text-[11px] font-bold uppercase tracking-tight"
+                                >
+                                    Book Sitter
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            ) : searchParams ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                    <p className="text-muted-foreground">No sitters found nearby. Try increasing the radius.</p>
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                    <p className="text-muted-foreground">Click "Use My Location" to find sitters near you.</p>
+                </div>
+            )}
         </div>
     );
 }
