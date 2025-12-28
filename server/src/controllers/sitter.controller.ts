@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { createSitter, findSitterByUserId, findOwnerByUserId, updateOwnerIsSitter, upsertSitterAvailability, findSitterAvailability } from "@/models/sitter.model";
+import { createSitter, findSitterByUserId, findOwnerByUserId, updateOwnerIsSitter, findServicesBySitterId, createServiceRecord } from "@/models/sitter.model";
 
 export const createSitterProfile = async (c: Context) => {
     const user = c.get("user");
@@ -111,53 +111,80 @@ export const getSitterProfile = async (c: Context) => {
             totalReviews: sitter.totalReviews,
         },
     });
+
 };
 
+export const SERVICE_TYPES = [
+    "boarding",
+    "daycare",
+    "walking",
+    "drop_in",
+    "house_sitting",
+] as const;
 
-// Update sitter availability (Toggle)
-export const updateSitterAvailability = async (c: Context) => {
+// Get all services for the authenticated sitter
+export const getSitterServices = async (c: Context) => {
     const user = c.get("user");
     if (!user) {
         return c.json({ success: false, message: "Not authenticated" }, 401);
     }
-
     const sitter = await findSitterByUserId(user.id);
     if (!sitter) {
-        return c.json({ success: false, message: "Sitter profile not found" }, 404);
+        return c.json({
+            success: false,
+            message: "Not registered as sitter",
+            isRegistered: false,
+        }, 404);
     }
-
-    const { isBlocked } = await c.req.json();
-
-    if (isBlocked === undefined) {
-        return c.json({ success: false, message: "isBlocked status is required" }, 400);
-    }
-
-    const availability = await upsertSitterAvailability(sitter.id, isBlocked);
-
+    const services = await findServicesBySitterId(sitter.id);
     return c.json({
         success: true,
-        message: isBlocked ? "You are now UNAVAILABLE to take pets" : "You are now AVAILABLE to take pets",
-        availability
+        isRegistered: true,
+        services,
     });
 };
 
-// Get sitter availability
-export const getSitterAvailability = async (c: Context) => {
+// Create a new service
+export const createSitterService = async (c: Context) => {
     const user = c.get("user");
     if (!user) {
         return c.json({ success: false, message: "Not authenticated" }, 401);
     }
-
     const sitter = await findSitterByUserId(user.id);
     if (!sitter) {
-        return c.json({ success: false, message: "Sitter profile not found" }, 404);
+        return c.json({
+            success: false,
+            message: "Sitter profile not found. Please register as a sitter first.",
+        }, 404);
     }
-
-    const availability = await findSitterAvailability(sitter.id);
-
-    // Default to available if no record exists yet
-    return c.json({
-        success: true,
-        availability: availability ?? { isBlocked: false }
+    const body = await c.req.json();
+    const { name, serviceType, description, pricePerDay, isActive } = body;
+    if (!name || !serviceType || !description || pricePerDay === undefined) {
+        return c.json({
+            success: false,
+            message: "Missing required fields: name, serviceType, description, pricePerDay",
+        }, 400);
+    }
+    if (!SERVICE_TYPES.includes(serviceType)) {
+        return c.json({
+            success: false,
+            message: `Invalid service type. Must be one of: ${SERVICE_TYPES.join(", ")}`,
+        }, 400);
+    }
+    if (typeof pricePerDay !== "number" || pricePerDay < 0) {
+        return c.json({ success: false, message: "Price must be a positive number" }, 400);
+    }
+    const service = await createServiceRecord({
+        sitterId: sitter.id,
+        name,
+        serviceType,
+        description,
+        pricePerDay,
+        isActive: isActive ?? true,
     });
+    if (service) {
+        return c.json({ success: true, service }, 201);
+    } else {
+        return c.json({ success: false, message: "Failed to create service" }, 500);
+    }
 };
