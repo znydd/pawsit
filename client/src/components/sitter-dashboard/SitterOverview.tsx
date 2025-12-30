@@ -1,4 +1,4 @@
-import { Bell, Star, Edit3, Check, CalendarCheck, MessageCircle, Eye, Banknote } from "lucide-react";
+import { Bell, Star, Edit3, Check, CalendarCheck, MessageCircle, Eye, Banknote, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useSitterBookings, useAcceptBooking } from "@/hooks/useBooking";
+import { Spinner } from "@/components/ui/spinner";
 
 export function SitterOverview() {
     const [isAvailable, setIsAvailable] = useState(true);
@@ -14,15 +16,9 @@ export function SitterOverview() {
     const [dailyCharge, setDailyCharge] = useState(1200);
     const [bookingTab, setBookingTab] = useState<"requests" | "accepted">("requests");
 
-    const mockRequests = [
-        { id: 1, name: 'Abid R.', pet: 'Bruno', type: 'Golden Retriever', duration: '3 Days', seed: 'Bruno' },
-        { id: 2, name: 'Mustakim M.', pet: 'Leo', type: 'Persian Cat', duration: '1 Day', seed: 'Leo' }
-    ];
-
-    const mockAccepted = [
-        { id: 3, name: 'Abidur R.', pet: 'Luna', type: 'Siamese Cat', status: 'Upcoming', date: 'Dec 28-30' },
-        { id: 4, name: 'Mozahedul H.', pet: 'Rex', type: 'Labrador', status: 'Active', date: 'Dec 21-23' }
-    ];
+    const { data: requests, isLoading: isRequestsLoading } = useSitterBookings('pending');
+    const { data: accepted, isLoading: isAcceptedLoading } = useSitterBookings('accepted');
+    const acceptBooking = useAcceptBooking();
 
     const handleToggleAvailability = (checked: boolean) => {
         setIsAvailable(checked);
@@ -32,6 +28,10 @@ export function SitterOverview() {
     const handlePriceSave = () => {
         setIsPriceEditing(false);
         toast.success(`Charge synced: ${dailyCharge} ৳`);
+    };
+
+    const handleAccept = async (id: number) => {
+        await acceptBooking.mutateAsync(id);
     };
 
     return (
@@ -97,23 +97,23 @@ export function SitterOverview() {
 
             {/* Statistics Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <Card className="bg-slate-950 p-6 rounded-lg text-white relative border-none shadow-sm">
+                <Card className="bg-slate-950 p-6 rounded-lg text-white relative border-none shadow-sm overflow-hidden group">
                     <div className="relative z-10">
                         <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Pending Requests</p>
-                        <p className="text-4xl font-bold">02</p>
+                        <p className="text-4xl font-bold">{(requests?.length || 0).toString().padStart(2, '0')}</p>
                     </div>
-                    <Bell className="absolute -right-2 -bottom-2 w-20 h-20 text-slate-800 rotate-12 opacity-50" />
+                    <Bell className="absolute -right-2 -bottom-2 w-20 h-20 text-slate-800 rotate-12 opacity-50 group-hover:scale-110 transition-transform duration-500" />
                 </Card>
 
                 <Card className="bg-background p-6 rounded-lg border-border shadow-sm">
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2">Total Earnings</p>
-                    <p className="text-4xl font-bold text-foreground">14,200 <span className="text-sm font-mono font-medium text-muted-foreground">৳</span></p>
+                    <p className="text-4xl font-bold text-foreground">0 <span className="text-sm font-mono font-medium text-muted-foreground">৳</span></p>
                 </Card>
 
                 <Card className="bg-background p-6 rounded-lg border-border shadow-sm">
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2">Host Rating</p>
                     <div className="flex items-center gap-2">
-                        <p className="text-4xl font-bold text-foreground">4.9</p>
+                        <p className="text-4xl font-bold text-foreground">New</p>
                         <Star className="text-yellow-500 w-6 h-6 fill-current" />
                     </div>
                 </Card>
@@ -131,7 +131,7 @@ export function SitterOverview() {
                                 bookingTab === "requests" ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
-                            Requests
+                            Requests {requests && requests.length > 0 && `(${requests.length})`}
                         </button>
                         <button
                             onClick={() => setBookingTab("accepted")}
@@ -140,68 +140,94 @@ export function SitterOverview() {
                                 bookingTab === "accepted" ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
-                            Accepted
+                            Accepted {accepted && accepted.length > 0 && `(${accepted.length})`}
                         </button>
                     </div>
                 </div>
 
-                <Card className="bg-background rounded-lg border-border p-4 md:p-6 shadow-sm divide-y divide-border/50 min-h-[300px]">
+                <Card className="bg-background rounded-lg border-border p-4 md:p-6 shadow-sm divide-y divide-border/50 min-h-[300px] flex flex-col">
                     {bookingTab === "requests" ? (
-                        mockRequests.map((r) => (
-                            <div key={r.id} className="flex flex-col md:flex-row items-center justify-between py-6 first:pt-0 last:pb-0 gap-4 group transition-all duration-300">
-                                <div className="flex items-center gap-4 w-full">
-                                    <Avatar className="w-12 h-12 rounded-md border shadow-sm shrink-0">
-                                        <AvatarImage src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${r.seed}`} />
-                                        <AvatarFallback>{r.pet[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="overflow-hidden">
-                                        <p className="text-base font-bold text-foreground truncate">
-                                            {r.name} <span className="text-muted-foreground font-normal mx-1">/</span> {r.pet}
-                                        </p>
-                                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
-                                            {r.type} • <span className="text-primary font-bold">{r.duration}</span>
-                                        </p>
+                        isRequestsLoading ? (
+                            <div className="flex items-center justify-center flex-1"><Spinner /></div>
+                        ) : !requests || requests.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center flex-1 text-center py-12">
+                                <p className="text-muted-foreground text-sm">No pending requests.</p>
+                            </div>
+                        ) : (
+                            requests.map((r) => (
+                                <div key={r.id} className="flex flex-col md:flex-row items-center justify-between py-6 first:pt-0 last:pb-0 gap-4 group transition-all duration-300">
+                                    <div className="flex items-center gap-4 w-full">
+                                        <Avatar className="w-12 h-12 rounded-md border shadow-sm shrink-0">
+                                            <AvatarImage src={r.ownerImage || `https://api.dicebear.com/7.x/adventurer/svg?seed=${r.ownerName}`} />
+                                            <AvatarFallback>{r.ownerName?.[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="overflow-hidden">
+                                            <p className="text-base font-bold text-foreground truncate">
+                                                {r.ownerName} <span className="text-muted-foreground font-normal mx-1">/</span> {r.serviceType}
+                                            </p>
+                                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
+                                                Request Code: <span className="text-primary font-bold">#{r.bookingCode}</span> • {new Date(r.createdAt).toLocaleDateString()}
+                                            </p>
+                                            {r.specialRequest && (
+                                                <p className="text-xs text-muted-foreground mt-1 italic line-clamp-1">
+                                                    "{r.specialRequest}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 w-full md:w-auto">
+                                        <Button variant="outline" size="sm" className="hidden sm:inline-flex rounded-md px-4 h-8 text-[11px] font-bold uppercase tracking-tight">
+                                            Decline
+                                        </Button>
+                                        <Button 
+                                            size="sm" 
+                                            onClick={() => handleAccept(r.id)} 
+                                            disabled={acceptBooking.isPending}
+                                            className="flex-1 sm:flex-none rounded-md px-6 h-8 text-[11px] font-bold uppercase tracking-tight"
+                                        >
+                                            {acceptBooking.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : null}
+                                            Accept
+                                        </Button>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 w-full md:w-auto">
-                                    <Button variant="outline" size="sm" className="hidden sm:inline-flex rounded-md px-4 h-8 text-[11px] font-bold uppercase tracking-tight">
-                                        Decline
-                                    </Button>
-                                    <Button size="sm" onClick={() => toast.success("Booking Secured")} className="flex-1 sm:flex-none rounded-md px-6 h-8 text-[11px] font-bold uppercase tracking-tight">
-                                        Accept
-                                    </Button>
-                                </div>
-                            </div>
-                        ))
+                            ))
+                        )
                     ) : (
-                        mockAccepted.map((a) => (
-                            <div key={a.id} className="flex flex-col md:flex-row items-center justify-between py-6 first:pt-0 last:pb-0 gap-4 group transition-all duration-300">
-                                <div className="flex items-center gap-4 w-full">
-                                    <div className="w-12 h-12 rounded-md bg-secondary/50 flex items-center justify-center border shadow-sm shrink-0">
-                                        <CalendarCheck className="text-muted-foreground w-6 h-6" />
-                                    </div>
-                                    <div className="overflow-hidden">
-                                        <p className="text-base font-bold text-foreground">
-                                            {a.name} <span className="text-muted-foreground font-normal mx-1">/</span> {a.pet}
-                                        </p>
-                                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
-                                            {a.type} • <span className="text-primary font-bold">{a.date}</span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                                    <Badge variant="outline" className={cn(
-                                        "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border-none shadow-none",
-                                        a.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-primary/10 text-primary'
-                                    )}>
-                                        {a.status}
-                                    </Badge>
-                                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-md">
-                                        <MessageCircle className="w-4 h-4" />
-                                    </Button>
-                                </div>
+                        isAcceptedLoading ? (
+                            <div className="flex items-center justify-center flex-1"><Spinner /></div>
+                        ) : !accepted || accepted.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center flex-1 text-center py-12">
+                                <p className="text-muted-foreground text-sm">No accepted bookings yet.</p>
                             </div>
-                        ))
+                        ) : (
+                            accepted.map((a) => (
+                                <div key={a.id} className="flex flex-col md:flex-row items-center justify-between py-6 first:pt-0 last:pb-0 gap-4 group transition-all duration-300">
+                                    <div className="flex items-center gap-4 w-full">
+                                        <div className="w-12 h-12 rounded-md bg-secondary/50 flex items-center justify-center border shadow-sm shrink-0">
+                                            <CalendarCheck className="text-muted-foreground w-6 h-6" />
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <p className="text-base font-bold text-foreground">
+                                                {a.ownerName} <span className="text-muted-foreground font-normal mx-1">/</span> {a.serviceType}
+                                            </p>
+                                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
+                                                CODE: <span className="text-primary font-bold">#{a.bookingCode}</span> • Amount: <span className="text-primary font-bold">{a.totalPrice}৳</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                                        <Badge variant="outline" className={cn(
+                                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border-none shadow-none bg-emerald-100 text-emerald-700"
+                                        )}>
+                                            Accepted
+                                        </Badge>
+                                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-md">
+                                            <MessageCircle className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        )
                     )}
                 </Card>
             </div>

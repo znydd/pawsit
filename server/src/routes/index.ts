@@ -3,6 +3,7 @@ import { authGuard } from "@/middleware/auth.middleware";
 import { ownerRoutes } from "./owner.routes";
 import { sitterRoutes } from "./sitter.routes";
 import { uploadRoutes } from "./upload.routes";
+import { bookingRoutes } from "./booking.routes";
 
 const apiRoutes = new Hono();
 
@@ -20,5 +21,9 @@ apiRoutes.route("/owners", ownerRoutes);
 // Sitter routes
 apiRoutes.use("/sitters/*", authGuard);
 apiRoutes.route("/sitters", sitterRoutes);
+
+// Booking routes
+apiRoutes.use("/bookings/*", authGuard);
+apiRoutes.route("/bookings", bookingRoutes);
 
 export { apiRoutes };

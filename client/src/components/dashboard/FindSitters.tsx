@@ -1,4 +1,4 @@
-import { Search, MapPin, Star, Navigation, Loader2 } from "lucide-react";
+import { Search, MapPin, Star, Navigation, Loader2, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -8,13 +8,47 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchSitters } from "@/hooks/useSitter";
+import { useCreateBooking } from "@/hooks/useBooking";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
-export function FindSitters() {
-    const [selectedFilters, setSelectedFilters] = useState<string[]>(["All"]);
-    const [selectedRadius, setSelectedRadius] = useState<number | null>(5);
-    const [searchParams, setSearchParams] = useState<{ lat: number; lng: number; radius: number } | null>(null);
+interface FindSittersProps {
+    searchParams: { lat: number; lng: number; radius: number } | null;
+    setSearchParams: (params: { lat: number; lng: number; radius: number } | null) => void;
+    selectedRadius: number | null;
+    setSelectedRadius: (radius: number | null) => void;
+    selectedFilters: string[];
+    setSelectedFilters: (filters: string[] | ((prev: string[]) => string[])) => void;
+    bookedSitterIds: number[];
+    setBookedSitterIds: (ids: number[] | ((prev: number[]) => number[])) => void;
+}
+
+export function FindSitters({
+    searchParams,
+    setSearchParams,
+    selectedRadius,
+    setSelectedRadius,
+    selectedFilters,
+    setSelectedFilters,
+    bookedSitterIds,
+    setBookedSitterIds
+}: FindSittersProps) {
+    const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+    const [selectedSitter, setSelectedSitter] = useState<any>(null);
+    const [specialRequest, setSpecialRequest] = useState("");
 
     const { data: sitters, isLoading } = useSearchSitters(searchParams);
+    const createBooking = useCreateBooking();
+
+    // Filter out sitters that have just been booked in this session
+    const displaySitters = sitters?.filter((s: any) => !bookedSitterIds.includes(s.id));
 
     const petFilters = ["All", "Cats", "Dogs", "Fish", "Bird", "Other"];
 
@@ -64,6 +98,33 @@ export function FindSitters() {
                 toast.error("Failed to get your location. Please check your browser permissions.");
             }
         );
+    };
+
+    const handleBookSitter = (sitter: any) => {
+        setSelectedSitter(sitter);
+        setIsBookingDialogOpen(true);
+    };
+
+    const confirmBooking = async () => {
+        if (!selectedSitter) return;
+
+        try {
+            const sitterIdToBook = selectedSitter.id;
+            await createBooking.mutateAsync({
+                sitterId: sitterIdToBook,
+                serviceId: selectedSitter.serviceId,
+                totalPrice: selectedSitter.pricePerDay || 0, // In real app, calculate based on days
+                specialRequest: specialRequest.trim() || undefined
+            });
+
+            // Immediately remove from local list
+            setBookedSitterIds(prev => [...prev, sitterIdToBook]);
+
+            setIsBookingDialogOpen(false);
+            setSpecialRequest("");
+        } catch (error) {
+            // Error managed by hook toast
+        }
     };
 
     return (
@@ -147,9 +208,9 @@ export function FindSitters() {
                         <div key={i} className="h-64 rounded-lg bg-secondary/20 animate-pulse border border-border" />
                     ))}
                 </div>
-            ) : sitters && sitters.length > 0 ? (
+            ) : displaySitters && displaySitters.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {sitters.map((sitter: any) => (
+                    {displaySitters.map((sitter: any) => (
                         <Card key={sitter.id} className="overflow-hidden border-border shadow-none hover:border-primary/30 hover:shadow-md transition-all group flex flex-col">
                             <div className="h-32 relative overflow-hidden shrink-0">
                                 <img
@@ -175,7 +236,7 @@ export function FindSitters() {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-bold text-primary leading-none">
-                                                {sitter.minPrice ? `${sitter.minPrice}৳` : "N/A"}
+                                                {sitter.pricePerDay ? `${sitter.pricePerDay}৳` : "N/A"}
                                             </p>
                                             <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">/ day</p>
                                         </div>
@@ -201,7 +262,7 @@ export function FindSitters() {
                                 <Button
                                     variant="default"
                                     size="sm"
-                                    onClick={() => toast.success(`Request Sent to ${sitter.displayName}`)}
+                                    onClick={() => handleBookSitter(sitter)}
                                     className="w-full h-8 text-[11px] font-bold uppercase tracking-tight"
                                 >
                                     Book Sitter
@@ -219,6 +280,57 @@ export function FindSitters() {
                     <p className="text-muted-foreground">Click "Use My Location" to find sitters near you.</p>
                 </div>
             )}
+
+            {/* Booking Dialog */}
+            <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Send Booking Request</DialogTitle>
+                        <DialogDescription>
+                            Request a stay with {selectedSitter?.displayName}. They will be notified immediately.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <div className="flex items-center gap-4 p-3 rounded-lg bg-secondary/30 border border-border">
+                            <Avatar className="w-10 h-10 border shadow-sm">
+                                <AvatarImage src={selectedSitter?.displayImage} />
+                                <AvatarFallback>{selectedSitter?.displayName?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="text-sm font-bold">{selectedSitter?.displayName}</p>
+                                <p className="text-xs text-muted-foreground">{selectedSitter?.serviceType || 'Pet Sitting'}</p>
+                            </div>
+                            <div className="ml-auto text-right">
+                                <p className="text-sm font-bold text-primary">{selectedSitter?.pricePerDay}৳</p>
+                                <p className="text-[10px] text-muted-foreground font-bold">PER DAY</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Special Request (Optional)</label>
+                            <Textarea
+                                placeholder="Any special needs for your pet? (e.g. food allergies, medication...)"
+                                className="resize-none"
+                                value={specialRequest}
+                                onChange={(e) => setSpecialRequest(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={confirmBooking}
+                            disabled={createBooking.isPending}
+                            className="gap-2"
+                        >
+                            {createBooking.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calendar className="w-4 h-4" />}
+                            Send Request
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -58,7 +58,9 @@ export const createSitterProfile = async (c: Context) => {
         bio: bio ?? null,
         address,
         city,
-        location,
+        location: location
+            ? { x: location.lng, y: location.lat }
+            : { x: 0, y: 0 },
         experienceYears: experienceYears ?? 0,
         acceptsLargeDogs: acceptsLargeDogs ?? false,
         acceptsSmallDogs: acceptsSmallDogs ?? false,
@@ -259,7 +261,7 @@ export const getSittersInRadius = async (c: Context) => {
 
 
 // Update sitter availability (PATCH)
-export const updateSitterAvailability= async (c: Context) => {
+export const updateSitterAvailability = async (c: Context) => {
     const user = c.get("user");
     if (!user) {
         return c.json({ success: false, message: "Not authenticated" }, 401);
