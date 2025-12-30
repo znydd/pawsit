@@ -31,8 +31,10 @@ const sitterFormSchema = z.object({
     bio: z.string(),
     address: z.string().min(5, "Address must be at least 5 characters"),
     city: z.string().min(2, "City must be at least 2 characters"),
-    latitude: z.number(),
-    longitude: z.number(),
+    location: z.object({
+        lat: z.number(),
+        lng: z.number(),
+    }),
     experienceYears: z.number().min(0),
     acceptsLargeDogs: z.boolean(),
     acceptsSmallDogs: z.boolean(),
@@ -58,8 +60,10 @@ export function SitterRegistrationForm() {
             bio: "",
             address: "",
             city: "",
-            latitude: 0,
-            longitude: 0,
+            location: {
+                lat: 0,
+                lng: 0,
+            },
             experienceYears: 0,
             acceptsLargeDogs: false,
             acceptsSmallDogs: false,
@@ -106,8 +110,8 @@ export function SitterRegistrationForm() {
         setIsLocating(true)
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                form.setFieldValue("latitude", position.coords.latitude)
-                form.setFieldValue("longitude", position.coords.longitude)
+                form.setFieldValue("location.lat", position.coords.latitude)
+                form.setFieldValue("location.lng", position.coords.longitude)
                 setIsLocating(false)
                 toast.success("Location updated!")
             },
@@ -242,7 +246,7 @@ export function SitterRegistrationForm() {
                                 <div className="md:col-span-2 space-y-4">
                                     <div className="flex items-end gap-4">
                                         <form.Field
-                                            name="latitude"
+                                            name="location.lat"
                                             children={(field) => (
                                                 <Field className="flex-1" data-invalid={field.state.meta.isTouched && !field.state.meta.isValid}>
                                                     <FieldLabel htmlFor={field.name}>Latitude</FieldLabel>
@@ -260,7 +264,7 @@ export function SitterRegistrationForm() {
                                             )}
                                         />
                                         <form.Field
-                                            name="longitude"
+                                            name="location.lng"
                                             children={(field) => (
                                                 <Field className="flex-1" data-invalid={field.state.meta.isTouched && !field.state.meta.isValid}>
                                                     <FieldLabel htmlFor={field.name}>Longitude</FieldLabel>
