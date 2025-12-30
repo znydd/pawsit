@@ -21,10 +21,10 @@ export const InitialPopUpForm = ({ onConfirm }: InitialPopUpFormProps) => {
     return (
         <>
             {/* Backdrop */}
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />
 
             {/* Modal */}
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div className="fixed inset-0 flex items-center justify-center z-60 p-4">
                 <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-8 animate-in fade-in zoom-in duration-200">
                     {/* Header */}
                     <h2 className="text-xl font-semibold text-foreground text-center mb-6">
