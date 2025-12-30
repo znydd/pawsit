@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { petSitterTable, petOwnerTable, serviceTable, sitterAvailabilityTable } from "shared/src/db/schema";
-import { eq, sql, and, ne } from "drizzle-orm";
+import { petSitterTable, petOwnerTable, serviceTable, sitterAvailabilityTable, bookingTable } from "shared/src/db/schema";
+import { eq, sql, and, ne, notExists } from "drizzle-orm";
 import type { NewPetSitter, NewService, NewSitterAvailability } from "shared/src";
 
 // Find sitter by user ID
@@ -101,7 +101,7 @@ export const findSittersInRadius = async (
     lng: number,
     radiusInMeters: number = 5000,
     excludeUserId?: string
-    ) => {
+) => {
 
     const centerPoint = sql`ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography`;
     const filters = [
@@ -111,6 +111,21 @@ export const findSittersInRadius = async (
 
     if (excludeUserId) {
         filters.push(ne(petSitterTable.userId, excludeUserId));
+
+        // Exclude sitters who already have a booking from this owner
+        filters.push(
+            notExists(
+                db.select()
+                    .from(bookingTable)
+                    .innerJoin(petOwnerTable, eq(bookingTable.ownerId, petOwnerTable.id))
+                    .where(
+                        and(
+                            eq(bookingTable.sitterId, petSitterTable.id),
+                            eq(petOwnerTable.userId, excludeUserId)
+                        )
+                    )
+            )
+        );
     }
 
     const sitters = await db
@@ -127,6 +142,7 @@ export const findSittersInRadius = async (
             location: petSitterTable.location,
             distance: sql<number>`ST_Distance(${petSitterTable.location}, ${centerPoint})`,
             // From service table
+            serviceId: serviceTable.id,
             pricePerDay: serviceTable.pricePerDay,
             serviceType: serviceTable.serviceType,
             // From availability table
