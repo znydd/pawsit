@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import * as z from "zod";
 import { useOwner, useCreateOwner } from "@/hooks/useOwner";
 import { Spinner } from "@/components/ui/spinner";
 import { InitialPopUpForm } from "@/components/InitialPopUpForm";
@@ -11,15 +12,42 @@ import { MyRequests } from "@/components/dashboard/MyRequests";
 import { Inbox } from "@/components/dashboard/Inbox";
 import { Settings } from "@/components/dashboard/Settings";
 
+const dashboardSearchSchema = z.object({
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  radius: z.number().optional(),
+  filters: z.array(z.string()).optional().default(["All"]),
+});
+
+type DashboardSearch = z.infer<typeof dashboardSearchSchema>;
+
 export const Route = createFileRoute("/_authenticated/dashboard")({
+  validateSearch: (search) => dashboardSearchSchema.parse(search),
   component: Dashboard,
 });
 
 function Dashboard() {
   const { auth } = Route.useRouteContext();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const { data: owner, isPending: isOwnerLoading } = useOwner();
   const createOwner = useCreateOwner();
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  const [bookedSitterIds, setBookedSitterIds] = useState<number[]>([]);
+
+  // Derived search state from URL
+  const searchParams = search.lat && search.lng ? { lat: search.lat, lng: search.lng, radius: search.radius || 5000 } : null;
+  const selectedRadius = (search.radius || 5000) / 1000;
+  const selectedFilters = search.filters || ["All"];
+
+  // Helper to update search params in URL
+  const updateSearch = (updates: Partial<DashboardSearch>) => {
+    navigate({
+      search: (prev) => ({ ...prev, ...updates }),
+      replace: true,
+    });
+  };
 
   const handleConfirm = (data: { displayName: string; displayImage: string }) => {
     createOwner.mutate(data);
@@ -48,7 +76,21 @@ function Dashboard() {
   const renderSection = () => {
     switch (activeTab) {
       case "dashboard":
-        return <FindSitters />;
+        return (
+          <FindSitters
+            searchParams={searchParams}
+            setSearchParams={(params) => updateSearch({ lat: params?.lat, lng: params?.lng, radius: params?.radius })}
+            selectedRadius={selectedRadius}
+            setSelectedRadius={(radius) => updateSearch({ radius: radius ? radius * 1000 : undefined })}
+            selectedFilters={selectedFilters}
+            setSelectedFilters={(filters) => {
+              const newFilters = typeof filters === 'function' ? filters(selectedFilters) : filters;
+              updateSearch({ filters: newFilters });
+            }}
+            bookedSitterIds={bookedSitterIds}
+            setBookedSitterIds={setBookedSitterIds}
+          />
+        );
       case "requests":
         return <MyRequests setActiveTab={setActiveTab} />;
       case "messages":
@@ -56,7 +98,21 @@ function Dashboard() {
       case "profile":
         return <Settings owner={owner} user={auth.user} createOwner={createOwner} />;
       default:
-        return <FindSitters />;
+        return (
+          <FindSitters
+            searchParams={searchParams}
+            setSearchParams={(params) => updateSearch({ lat: params?.lat, lng: params?.lng, radius: params?.radius })}
+            selectedRadius={selectedRadius}
+            setSelectedRadius={(radius) => updateSearch({ radius: radius ? radius * 1000 : undefined })}
+            selectedFilters={selectedFilters}
+            setSelectedFilters={(filters) => {
+              const newFilters = typeof filters === 'function' ? filters(selectedFilters) : filters;
+              updateSearch({ filters: newFilters });
+            }}
+            bookedSitterIds={bookedSitterIds}
+            setBookedSitterIds={setBookedSitterIds}
+          />
+        );
     }
   };
 
