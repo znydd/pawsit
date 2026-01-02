@@ -222,7 +222,6 @@ export const updateSitterService = async (c: Context) => {
 // Find sitters in radius
 export const getSittersInRadius = async (c: Context) => {
     const user = c.get("user");
-    console.log(user);
     if (!user) {
         return c.json({ success: false, message: "Not authenticated" }, 401);
     }
@@ -230,7 +229,6 @@ export const getSittersInRadius = async (c: Context) => {
     const latStr = c.req.query("lat");
     const lngStr = c.req.query("lng");
     const radiusStr = c.req.query("radius");
-    console.log(latStr, lngStr, radiusStr);
 
     if (!latStr || !lngStr) {
         return c.json({
@@ -251,7 +249,6 @@ export const getSittersInRadius = async (c: Context) => {
     }
 
     const sitters = await findSittersInRadius(lat, lng, radius, user.id);
-    console.log(sitters);
 
     return c.json({
         success: true,

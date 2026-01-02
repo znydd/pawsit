@@ -19,8 +19,17 @@ export const createBooking = async (data: NewBooking) => {
 // Find booking by ID (for accept/delete operations)
 export const findBookingById = async (bookingId: number) => {
     const booking = await db
-        .select()
+        .select({
+            id: bookingTable.id,
+            sitterId: bookingTable.sitterId,
+            ownerId: bookingTable.ownerId,
+            isAccepted: bookingTable.isAccepted,
+            sitterUserId: petSitterTable.userId,
+            ownerUserId: petOwnerTable.userId,
+        })
         .from(bookingTable)
+        .leftJoin(petSitterTable, eq(bookingTable.sitterId, petSitterTable.id))
+        .leftJoin(petOwnerTable, eq(bookingTable.ownerId, petOwnerTable.id))
         .where(eq(bookingTable.id, bookingId))
         .limit(1);
     return booking[0] ?? null;
