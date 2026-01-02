@@ -4,11 +4,16 @@ import { ownerRoutes } from "./owner.routes";
 import { sitterRoutes } from "./sitter.routes";
 import { uploadRoutes } from "./upload.routes";
 import { bookingRoutes } from "./booking.routes";
+import { chatRoutes } from "./chat.routes";
 
 const apiRoutes = new Hono();
 
 // Health check
 apiRoutes.get("/health", (c) => c.json({ status: "ok" }));
+
+// Chat routes
+apiRoutes.use("/chat/*", authGuard);
+apiRoutes.route("/chat", chatRoutes);
 
 // Upload routes
 apiRoutes.use("/upload/*", authGuard);

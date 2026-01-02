@@ -9,6 +9,7 @@ import {
 } from "@/models/booking.model";
 import { findOwnerByUserId } from "@/models/owner.model";
 import { findSitterByUserId, findServicesBySitterId } from "@/models/sitter.model";
+import { streamService } from "@/services/stream.service";
 
 // Generate unique booking code
 const generateBookingCode = (): string => {
@@ -169,6 +170,17 @@ export const acceptBookingRequest = async (c: Context) => {
 
         // Update booking status
         const updatedBooking = await updateBookingStatus(bookingId);
+
+        // Create Stream Chat channel
+        try {
+            if (booking.ownerUserId && booking.sitterUserId) {
+                await streamService.createChannel(bookingId, [booking.ownerUserId, booking.sitterUserId]);
+                console.log(`Stream channel created for booking ${bookingId}`);
+            }
+        } catch (streamError) {
+            console.error("Failed to create Stream channel:", streamError);
+            // We don't fail the whole request if chat creation fails, but it's not ideal
+        }
 
         return c.json({
             success: true,
