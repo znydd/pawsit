@@ -5,6 +5,7 @@ import { sitterRoutes } from "./sitter.routes";
 import { uploadRoutes } from "./upload.routes";
 import { bookingRoutes } from "./booking.routes";
 import { chatRoutes } from "./chat.routes";
+import reviewRoutes from "./review.routes";
 
 const apiRoutes = new Hono();
 
@@ -27,8 +28,11 @@ apiRoutes.route("/owners", ownerRoutes);
 apiRoutes.use("/sitters/*", authGuard);
 apiRoutes.route("/sitters", sitterRoutes);
 
-// Booking routes
 apiRoutes.use("/bookings/*", authGuard);
 apiRoutes.route("/bookings", bookingRoutes);
+
+// Review routes
+apiRoutes.use("/reviews/*", authGuard);
+apiRoutes.route("/reviews", reviewRoutes);
 
 export { apiRoutes };

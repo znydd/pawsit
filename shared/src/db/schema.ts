@@ -140,7 +140,7 @@ export const paymentTable = pgTable("payment", {
 
 export const reviewTable = pgTable("review", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    bookingId: integer("booking_id").notNull().references(() => bookingTable.id),
+    bookingId: integer("booking_id").references(() => bookingTable.id, { onDelete: 'set null' }),
     sitterId: integer("sitter_id").notNull().references(() => petSitterTable.id),
     ownerId: integer("owner_id").notNull().references(() => petOwnerTable.id),
     rating: integer("rating").notNull(),

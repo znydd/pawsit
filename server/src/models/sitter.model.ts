@@ -27,6 +27,19 @@ export const createSitter = async (data: Omit<NewPetSitter, 'verified' | 'averag
     return sitter;
 };
 
+// Increment sitter's total reviews count
+export const incrementSitterTotalReviews = async (sitterId: number) => {
+    const [updated] = await db
+        .update(petSitterTable)
+        .set({
+            totalReviews: sql`${petSitterTable.totalReviews} + 1`,
+            updatedAt: new Date(),
+        })
+        .where(eq(petSitterTable.id, sitterId))
+        .returning();
+    return updated;
+};
+
 
 // Create a new service
 export const createServiceRecord = async (data: NewService) => {
