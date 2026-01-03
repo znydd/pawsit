@@ -86,3 +86,12 @@ export type NewReport = typeof reportTable.$inferInsert;
 // Notification
 export type Notification = typeof notificationTable.$inferSelect;
 export type NewNotification = typeof notificationTable.$inferInsert;
+
+// ============================================================================
+// Search Types
+// ============================================================================
+
+// Manual Search Params
+export type ManualSearchParams = {
+    area: string;
+};

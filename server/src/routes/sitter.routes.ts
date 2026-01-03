@@ -1,10 +1,12 @@
 import { Hono } from "hono";
-import { createSitterProfile,
+import {
+    createSitterProfile,
     getSitterProfile,
     getSitterServices,
     updateSitterService,
     updateSitterAvailability,
-    getSittersInRadius
+    getSittersInRadius,
+    getSittersByArea
 } from "@/controllers/sitter.controller";
 
 const sitterRoutes = new Hono();
@@ -13,7 +15,7 @@ const sitterRoutes = new Hono();
 sitterRoutes.get("/profile", getSitterProfile);
 sitterRoutes.get("/services", getSitterServices);
 sitterRoutes.get("/search", getSittersInRadius);
-
+sitterRoutes.get("/manual-search", getSittersByArea);
 // POST
 sitterRoutes.post("/profile", createSitterProfile);
 
