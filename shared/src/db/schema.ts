@@ -1,5 +1,5 @@
 import { user } from "./auth.schema";
-import { 
+import {
     pgTable,
     text,
     timestamp,
@@ -20,8 +20,8 @@ export const petSitterTable = pgTable("pet_sitter", {
     headline: varchar("headline").notNull(),
     bio: varchar("bio"),
     address: varchar("address").notNull(),
-    city: varchar("city").notNull(),
-    location: geometry("location", {type: "Point", mode: "xy", srid: 4326}).notNull(),
+    area: varchar("area").notNull(),
+    location: geometry("location", { type: "Point", mode: "xy", srid: 4326 }).notNull(),
     experienceYears: integer("experience_years").default(0).notNull(),
     acceptsLargeDogs: boolean("accepts_large_dogs").default(false).notNull(),
     acceptsSmallDogs: boolean("accepts_small_dogs").default(false).notNull(),
@@ -86,7 +86,7 @@ export const petOwnerTable = pgTable("pet_owner", {
     bio: varchar("bio"),
     address: varchar("address"),
     city: varchar("city"),
-    location: geometry("location", {type: "Point", mode: "xy", srid: 4326}).notNull(),
+    location: geometry("location", { type: "Point", mode: "xy", srid: 4326 }).notNull(),
     isSitter: boolean("is_sitter").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

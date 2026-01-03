@@ -169,3 +169,60 @@ export const findSittersInRadius = async (
 
     return sitters;
 };
+
+// Find sitters by area (manual search)
+export const findSittersByArea = async (
+    area: string,
+    excludeUserId?: string
+) => {
+    const filters = [
+        sql`LOWER(${petSitterTable.area}) LIKE LOWER(${'%' + area + '%'})`,
+        eq(sitterAvailabilityTable.isAvailable, true) // Only available sitters
+    ];
+
+    if (excludeUserId) {
+        filters.push(ne(petSitterTable.userId, excludeUserId));
+
+        // Exclude sitters who already have a booking from this owner
+        filters.push(
+            notExists(
+                db.select()
+                    .from(bookingTable)
+                    .innerJoin(petOwnerTable, eq(bookingTable.ownerId, petOwnerTable.id))
+                    .where(
+                        and(
+                            eq(bookingTable.sitterId, petSitterTable.id),
+                            eq(petOwnerTable.userId, excludeUserId)
+                        )
+                    )
+            )
+        );
+    }
+
+    const sitters = await db
+        .select({
+            id: petSitterTable.id,
+            userId: petSitterTable.userId,
+            displayName: petSitterTable.displayName,
+            displayImage: petSitterTable.displayImage,
+            headline: petSitterTable.headline,
+            averageRating: petSitterTable.averageRating,
+            totalReviews: petSitterTable.totalReviews,
+            address: petSitterTable.address,
+            area: petSitterTable.area,
+            location: petSitterTable.location,
+            // From service table
+            serviceId: serviceTable.id,
+            pricePerDay: serviceTable.pricePerDay,
+            serviceType: serviceTable.serviceType,
+            // From availability table
+            isAvailable: sitterAvailabilityTable.isAvailable,
+        })
+        .from(petSitterTable)
+        .leftJoin(serviceTable, eq(petSitterTable.id, serviceTable.sitterId))
+        .leftJoin(sitterAvailabilityTable, eq(petSitterTable.id, sitterAvailabilityTable.sitterId))
+        .where(and(...filters))
+        .orderBy(petSitterTable.averageRating);
+
+    return sitters;
+};

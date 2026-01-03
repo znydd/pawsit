@@ -7,6 +7,7 @@ import {
     updateServiceRecord,
     createSitterAvailability,
     findSittersInRadius,
+    findSittersByArea,
     patchSitterAvailability
 } from "@/models/sitter.model";
 import { findOwnerByUserId, updateOwnerIsSitter } from "@/models/owner.model";
@@ -36,7 +37,7 @@ export const createSitterProfile = async (c: Context) => {
         headline,
         bio,
         address,
-        city,
+        area,
         location,
         experienceYears,
         acceptsLargeDogs,
@@ -57,7 +58,7 @@ export const createSitterProfile = async (c: Context) => {
         headline,
         bio: bio ?? null,
         address,
-        city,
+        area,
         location: location
             ? { x: location.lng, y: location.lat }
             : { x: 0, y: 0 },
@@ -122,7 +123,7 @@ export const getSitterProfile = async (c: Context) => {
             headline: sitter.headline,
             bio: sitter.bio,
             address: sitter.address,
-            city: sitter.city,
+            area: sitter.area,
             location: sitter.location,
             experienceYears: sitter.experienceYears,
             acceptsLargeDogs: sitter.acceptsLargeDogs,
@@ -295,4 +296,28 @@ export const updateSitterAvailability = async (c: Context) => {
     } else {
         return c.json({ success: false, message: "Failed to update availability" }, 500);
     }
+};
+
+// Manual search by area
+export const getSittersByArea = async (c: Context) => {
+    const user = c.get("user");
+    if (!user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    const area = c.req.query("area");
+
+    if (!area) {
+        return c.json({
+            success: false,
+            message: "Missing required query parameter: area",
+        }, 400);
+    }
+
+    const sitters = await findSittersByArea(area, user.id);
+
+    return c.json({
+        success: true,
+        sitters,
+    });
 };
