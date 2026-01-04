@@ -9,7 +9,9 @@ import {
     findSittersInRadius,
     findSittersByArea,
     patchSitterAvailability,
-    updateSitterProfile
+    updateSitterProfile,
+    createSitterPhoto,
+    getSitterPhotosBySitterId
 } from "@/models/sitter.model";
 import { findOwnerByUserId, updateOwnerIsSitter } from "@/models/owner.model";
 
@@ -384,3 +386,58 @@ export const patchSitterProfile = async (c: Context) => {
         );
     }
 };
+
+// Get photos for authenticated sitter
+export const getSitterPhotos = async (c: Context) => {
+    const user = c.get("user");
+    if (!user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    const sitter = await findSitterByUserId(user.id);
+    if (!sitter) {
+        return c.json({ success: false, message: "Sitter profile not found" }, 404);
+    }
+
+    const photos = await getSitterPhotosBySitterId(sitter.id);
+    return c.json({ success: true, photos });
+};
+
+// Upload/Save a sitter photo record
+export const uploadSitterPhoto = async (c: Context) => {
+    const user = c.get("user");
+    if (!user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    const sitter = await findSitterByUserId(user.id);
+    if (!sitter) {
+        return c.json({ success: false, message: "Sitter profile not found" }, 404);
+    }
+
+    try {
+        const body = await c.req.json();
+        const { imageUrl, photoType, caption } = body;
+
+        if (!imageUrl || !photoType) {
+            return c.json({ success: false, message: "imageUrl and photoType are required" }, 400);
+        }
+
+        const photo = await createSitterPhoto({
+            sitterId: sitter.id,
+            imageUrl,
+            photoType,
+            caption: caption ?? null,
+        });
+
+        if (photo) {
+            return c.json({ success: true, photo }, 201);
+        } else {
+            return c.json({ success: false, message: "Failed to save photo" }, 500);
+        }
+    } catch (error) {
+        console.error("Upload sitter photo error:", error);
+        return c.json({ success: false, message: "Internal server error" }, 500);
+    }
+};
+

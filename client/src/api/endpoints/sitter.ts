@@ -21,4 +21,12 @@ export const sitterApi = {
         const { data } = await apiClient.get('/sitters/search', { params });
         return data.sitters;
     },
+    getPhotos: async () => {
+        const { data } = await apiClient.get('/sitters/photos');
+        return data.photos;
+    },
+    savePhoto: async (payload: { imageUrl: string; photoType: string; caption?: string }) => {
+        const { data } = await apiClient.post('/sitters/photos', payload);
+        return data.photo;
+    },
 };

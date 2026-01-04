@@ -1,7 +1,7 @@
 import { db } from "@/db";
-import { petSitterTable, petOwnerTable, serviceTable, sitterAvailabilityTable, bookingTable } from "shared/src/db/schema";
+import { petSitterTable, petOwnerTable, serviceTable, sitterAvailabilityTable, bookingTable, sitterPhotoTable } from "shared/src/db/schema";
 import { eq, sql, and, ne, notExists } from "drizzle-orm";
-import type { NewPetSitter, NewService, NewSitterAvailability } from "shared/src";
+import type { NewPetSitter, NewService, NewSitterAvailability, NewSitterPhoto } from "shared/src";
 
 // Find sitter by user ID
 export const findSitterByUserId = async (userId: string) => {
@@ -112,6 +112,28 @@ export const updateSitterProfile = async (
         .where(eq(petSitterTable.userId, userId))
         .returning();
     return sitter ?? null;
+};
+ 
+// Create sitter photo record
+export const createSitterPhoto = async (data: NewSitterPhoto) => {
+    const [photo] = await db
+        .insert(sitterPhotoTable)
+        .values({
+            ...data,
+            updatedAt: new Date(),
+        })
+        .returning();
+    return photo;
+};
+
+// Get all photos for a sitter
+export const getSitterPhotosBySitterId = async (sitterId: number) => {
+    const photos = await db
+        .select()
+        .from(sitterPhotoTable)
+        .where(eq(sitterPhotoTable.sitterId, sitterId))
+        .orderBy(sitterPhotoTable.createdAt);
+    return photos;
 };
 
 
