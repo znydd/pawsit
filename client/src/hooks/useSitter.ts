@@ -31,3 +31,22 @@ export const useSearchSitters = (params: { lat: number; lng: number; radius: num
         enabled: !!params,
     });
 };
+
+export const useSitterPhotos = () => {
+    return useQuery({
+        queryKey: ['sitter-photos'],
+        queryFn: sitterApi.getPhotos,
+    });
+};
+
+export const useUploadSitterPhoto = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: sitterApi.savePhoto,
+        onSuccess: () => {
+            qc.invalidateQueries({
+                queryKey: ['sitter-photos'],
+            });
+        },
+    });
+};
