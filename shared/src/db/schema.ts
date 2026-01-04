@@ -175,6 +175,7 @@ export const notificationTable = pgTable("notification", {
     userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
     type: varchar("type").notNull(),
     content: varchar("content").notNull(),
+    isRead: boolean("is_read").default(false).notNull(),
     sendToEmail: boolean("send_to_email").default(true).notNull(),
     sendToPhone: boolean("send_to_phone").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
