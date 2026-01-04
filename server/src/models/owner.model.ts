@@ -28,3 +28,18 @@ export const updateOwnerIsSitter = async (userId: string) => {
         .set({ isSitter: true })
         .where(eq(petOwnerTable.userId, userId));
 };
+
+// Update owner profile
+export const updateOwnerProfile = async (
+    userId: string,
+    data: Partial<Pick<NewPetOwner, 'displayName' | 'displayImage' | 'phoneNumber' | 'bio' | 'address' | 'area'>>
+) => {
+    const [owner] = await db
+        .update(petOwnerTable)
+        .set({
+            ...data,
+        })
+        .where(eq(petOwnerTable.userId, userId))
+        .returning();
+    return owner ?? null;
+};

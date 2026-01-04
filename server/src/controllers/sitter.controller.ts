@@ -8,7 +8,8 @@ import {
     createSitterAvailability,
     findSittersInRadius,
     findSittersByArea,
-    patchSitterAvailability
+    patchSitterAvailability,
+    updateSitterProfile
 } from "@/models/sitter.model";
 import { findOwnerByUserId, updateOwnerIsSitter } from "@/models/owner.model";
 
@@ -320,4 +321,66 @@ export const getSittersByArea = async (c: Context) => {
         success: true,
         sitters,
     });
+};
+
+// Update sitter profile (PATCH)
+export const patchSitterProfile = async (c: Context) => {
+    const user = c.get("user");
+    if (!user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    const existingSitter = await findSitterByUserId(user.id);
+    if (!existingSitter) {
+        return c.json({ success: false, message: "Sitter profile not found" }, 404);
+    }
+
+    try {
+        const body = await c.req.json();
+        const {
+            displayName,
+            displayImage,
+            phoneNumber,
+            headline,
+            bio,
+            address,
+            area,
+            experienceYears,
+            acceptsLargeDogs,
+            acceptsSmallDogs,
+            acceptsCats,
+            acceptsFish,
+            acceptsBirds,
+            acceptsOtherPets,
+        } = body;
+
+        const sitter = await updateSitterProfile(user.id, {
+            displayName,
+            displayImage,
+            phoneNumber,
+            headline,
+            bio,
+            address,
+            area,
+            experienceYears,
+            acceptsLargeDogs,
+            acceptsSmallDogs,
+            acceptsCats,
+            acceptsFish,
+            acceptsBirds,
+            acceptsOtherPets,
+        });
+
+        if (sitter) {
+            return c.json({ success: true, sitter }, 200);
+        } else {
+            return c.json({ success: false, message: "Failed to update profile" }, 500);
+        }
+    } catch (error) {
+        console.error("Update sitter profile error:", error);
+        return c.json(
+            { success: false, message: "Internal server error" },
+            500
+        );
+    }
 };

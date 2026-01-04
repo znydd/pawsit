@@ -85,7 +85,7 @@ export const petOwnerTable = pgTable("pet_owner", {
     phoneNumber: text("phone_number"),
     bio: varchar("bio"),
     address: varchar("address"),
-    city: varchar("city"),
+    area: varchar("area"),
     location: geometry("location", { type: "Point", mode: "xy", srid: 4326 }).notNull(),
     isSitter: boolean("is_sitter").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),

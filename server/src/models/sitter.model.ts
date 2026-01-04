@@ -98,6 +98,23 @@ export const patchSitterAvailability = async (
     return availability;
 };
 
+// Update sitter profile
+export const updateSitterProfile = async (
+    userId: string,
+    data: Partial<Pick<NewPetSitter, 'displayName' | 'displayImage' | 'phoneNumber' | 'headline' | 'bio' | 'address' | 'area' | 'experienceYears' | 'acceptsLargeDogs' | 'acceptsSmallDogs' | 'acceptsCats' | 'acceptsFish' | 'acceptsBirds' | 'acceptsOtherPets'>>
+) => {
+    const [sitter] = await db
+        .update(petSitterTable)
+        .set({
+            ...data,
+            updatedAt: new Date(),
+        })
+        .where(eq(petSitterTable.userId, userId))
+        .returning();
+    return sitter ?? null;
+};
+
+
 
 // Find all services by sitter ID
 export const findServicesBySitterId = async (sitterId: number) => {
@@ -151,7 +168,7 @@ export const findSittersInRadius = async (
             averageRating: petSitterTable.averageRating,
             totalReviews: petSitterTable.totalReviews,
             address: petSitterTable.address,
-            city: petSitterTable.city,
+            area: petSitterTable.area,
             location: petSitterTable.location,
             distance: sql<number>`ST_Distance(${petSitterTable.location}, ${centerPoint})`,
             // From service table

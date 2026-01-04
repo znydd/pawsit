@@ -6,7 +6,8 @@ import {
     updateSitterService,
     updateSitterAvailability,
     getSittersInRadius,
-    getSittersByArea
+    getSittersByArea,
+    patchSitterProfile
 } from "@/controllers/sitter.controller";
 
 const sitterRoutes = new Hono();
@@ -22,6 +23,8 @@ sitterRoutes.post("/profile", createSitterProfile);
 // PATCH
 sitterRoutes.patch("/services", updateSitterService);
 sitterRoutes.patch("/availability", updateSitterAvailability);
+sitterRoutes.patch("/profile", patchSitterProfile);
 
 
 export { sitterRoutes };
+
