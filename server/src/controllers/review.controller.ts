@@ -1,6 +1,6 @@
 import type { Context } from "hono";
-import { findOwnerByUserId } from "@/models/owner.model";
-import { findSitterByUserId } from "@/models/sitter.model";
+import { findOwnerByUserId, findOwnerById } from "@/models/owner.model";
+import { findSitterByUserId, findSitterById } from "@/models/sitter.model";
 import { findBookingById, deleteBooking } from "@/models/booking.model";
 import { incrementSitterTotalReviews } from "@/models/sitter.model";
 import { 
@@ -10,6 +10,7 @@ import {
     findReviewById
 } from "@/models/review.model";
 import { streamService } from "@/services/stream.service";
+import { createNotification } from "@/models/notification.model";
 
 export const submitReview = async (c: Context) => {
     const user = c.get("user");
@@ -44,6 +45,21 @@ export const submitReview = async (c: Context) => {
         } catch (error) {
             console.error("Failed to delete Stream channel:", error);
         }
+
+        // Create notification for sitter
+        try {
+            const sitter = await findSitterById(booking.sitterId);
+            if (sitter) {
+                const ownerName = owner.displayName || "A pet owner";
+                await createNotification({
+                    userId: sitter.userId,
+                    type: "review_received",
+                    content: `${ownerName} left you a ${rating}-star review!`,
+                });
+            }
+        } catch (notifError) {
+            console.error("Failed to create notification:", notifError);
+        }
     }
 
     return c.json({ success: true, message: "Review submitted", review }, 201);
@@ -76,5 +92,22 @@ export const submitSitterReply = async (c: Context) => {
     }
 
     const updatedReview = await updateReviewReply(reviewId, sitter.id, response);
+
+    // Create notification for owner
+    try {
+        const owner = await findOwnerById(review.ownerId);
+        if (owner) {
+            const sitterName = sitter.displayName || "A sitter";
+            await createNotification({
+                userId: owner.userId,
+                type: "review_reply",
+                content: `${sitterName} replied to your review!`,
+            });
+        }
+    } catch (notifError) {
+        console.error("Failed to create notification:", notifError);
+    }
+
     return c.json({ success: true, message: "Reply submitted", review: updatedReview });
 };
+
