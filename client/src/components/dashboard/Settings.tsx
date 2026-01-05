@@ -13,6 +13,14 @@ import { useUpload } from "@/hooks/useUpload";
 import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
+import { DHAKA_AREAS } from "shared/src/constants";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const profileSchema = z.object({
     displayName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -200,12 +208,21 @@ export function Settings({ owner, user }: SettingsProps) {
                                                 <FieldLabel className="text-xs font-semibold tracking-tight uppercase text-muted-foreground mb-1.5">
                                                     Area
                                                 </FieldLabel>
-                                                <Input
+                                                <Select
                                                     value={field.state.value}
-                                                    onChange={(e) => field.handleChange(e.target.value)}
-                                                    placeholder="e.g. Gulshan"
-                                                    className="h-10 text-sm"
-                                                />
+                                                    onValueChange={(value) => field.handleChange(value)}
+                                                >
+                                                    <SelectTrigger className="h-10 text-sm">
+                                                        <SelectValue placeholder="Select Area" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {DHAKA_AREAS.map((area) => (
+                                                            <SelectItem key={area} value={area}>
+                                                                {area}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FieldError errors={field.state.meta.errors} />
                                             </Field>
                                         )}
