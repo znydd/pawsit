@@ -29,4 +29,21 @@ export const sitterApi = {
         const { data } = await apiClient.post('/sitters/photos', payload);
         return data.photo;
     },
+    patchSitter: async (payload: {
+        displayName?: string;
+        displayImage?: string;
+        phoneNumber?: string;
+        headline?: string;
+        bio?: string;
+        experienceYears?: number;
+        acceptsLargeDogs?: boolean;
+        acceptsSmallDogs?: boolean;
+        acceptsCats?: boolean;
+        acceptsFish?: boolean;
+        acceptsBirds?: boolean;
+        acceptsOtherPets?: boolean;
+    }) => {
+        const { data } = await apiClient.patch('/sitters/profile', payload);
+        return data.sitter;
+    },
 };

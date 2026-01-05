@@ -50,3 +50,15 @@ export const useUploadSitterPhoto = () => {
         },
     });
 };
+
+export const useUpdateSitter = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: sitterApi.patchSitter,
+        onSuccess: () => {
+            qc.invalidateQueries({
+                queryKey: ['sitter'],
+            });
+        },
+    });
+};
