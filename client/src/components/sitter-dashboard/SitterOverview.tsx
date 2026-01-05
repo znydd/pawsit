@@ -4,10 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useSitterBookings, useAcceptBooking, useDeclineBooking } from "@/hooks/useBooking";
+import { useSitterServices, useUpdateService, useUpdateAvailability } from "@/hooks/useSitter";
 import { bookingApi } from "@/api/endpoints/booking";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -18,21 +19,39 @@ interface SitterOverviewProps {
 export function SitterOverview({ setActiveTab }: SitterOverviewProps) {
     const [isAvailable, setIsAvailable] = useState(true);
     const [isPriceEditing, setIsPriceEditing] = useState(false);
-    const [dailyCharge, setDailyCharge] = useState(1200);
+    const [dailyCharge, setDailyCharge] = useState(0);
     const [bookingTab, setBookingTab] = useState<"requests" | "accepted">("requests");
 
     const { data: requests, isLoading: isRequestsLoading } = useSitterBookings('pending');
     const { data: accepted, isLoading: isAcceptedLoading } = useSitterBookings('accepted');
     const acceptBooking = useAcceptBooking();
 
+    // Fetch services and availability
+    const { data: services } = useSitterServices();
+    const updateService = useUpdateService();
+    const updateAvailability = useUpdateAvailability();
+
+    // Sync local state with fetched data
+    useEffect(() => {
+        if (services && services.length > 0) {
+            setDailyCharge(services[0].pricePerDay || 0);
+        }
+    }, [services]);
+
     const handleToggleAvailability = (checked: boolean) => {
         setIsAvailable(checked);
-        toast.success(checked ? "Now Accepting Pets" : "Host Offline");
+        updateAvailability.mutate({ isAvailable: checked }, {
+            onSuccess: () => toast.success(checked ? "Now Accepting Pets" : "Host Offline"),
+            onError: () => toast.error("Failed to update availability"),
+        });
     };
 
     const handlePriceSave = () => {
         setIsPriceEditing(false);
-        toast.success(`Charge synced: ${dailyCharge} ৳`);
+        updateService.mutate({ pricePerDay: dailyCharge }, {
+            onSuccess: () => toast.success(`Charge synced: ${dailyCharge} ৳`),
+            onError: () => toast.error("Failed to update price"),
+        });
     };
 
     const handleAccept = (id: number) => {

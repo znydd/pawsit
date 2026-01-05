@@ -47,4 +47,16 @@ export const sitterApi = {
         const { data } = await apiClient.patch('/sitters/profile', payload);
         return data.sitter;
     },
+    getServices: async () => {
+        const { data } = await apiClient.get('/sitters/services');
+        return data.services;
+    },
+    updateService: async (payload: { pricePerDay?: number; serviceType?: string; isActive?: boolean }) => {
+        const { data } = await apiClient.patch('/sitters/services', payload);
+        return data.service;
+    },
+    updateAvailability: async (payload: { isAvailable: boolean }) => {
+        const { data } = await apiClient.patch('/sitters/availability', payload);
+        return data.availability;
+    },
 };

@@ -62,3 +62,30 @@ export const useUpdateSitter = () => {
         },
     });
 };
+
+export const useSitterServices = () => {
+    return useQuery({
+        queryKey: ['sitter-services'],
+        queryFn: sitterApi.getServices,
+    });
+};
+
+export const useUpdateService = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: sitterApi.updateService,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['sitter-services'] });
+        },
+    });
+};
+
+export const useUpdateAvailability = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: sitterApi.updateAvailability,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['sitter'] });
+        },
+    });
+};
