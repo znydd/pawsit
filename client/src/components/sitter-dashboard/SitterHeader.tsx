@@ -1,4 +1,5 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { NotificationDropdown } from "@/components/ui/notification-dropdown";
 
 interface SitterHeaderProps {
     activeTab: string;
@@ -22,6 +23,7 @@ export function SitterHeader({ activeTab, userName, userImage, userInitials }: S
                 {titles[activeTab]}
             </h2>
             <div className="flex items-center gap-3">
+                <NotificationDropdown />
                 <div className="text-right hidden sm:block">
                     <p className="text-xs font-semibold text-foreground leading-none">{userName}</p>
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-1">Pet Sitter</p>
@@ -34,3 +36,4 @@ export function SitterHeader({ activeTab, userName, userImage, userInitials }: S
         </header>
     );
 }
+

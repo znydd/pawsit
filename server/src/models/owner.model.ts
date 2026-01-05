@@ -13,6 +13,16 @@ export const findOwnerByUserId = async (userId: string) => {
     return owner[0] ?? null;
 }
 
+// Find owner by ID
+export const findOwnerById = async (ownerId: number) => {
+    const owner = await db
+        .select()
+        .from(petOwnerTable)
+        .where(eq(petOwnerTable.id, ownerId))
+        .limit(1);
+    return owner[0] ?? null;
+}
+
 export const createOwner = async (newOwnerData: NewPetOwner) => {
     const newOwner = await db
         .insert(petOwnerTable)

@@ -10,6 +10,7 @@ import {
 import { findOwnerByUserId } from "@/models/owner.model";
 import { findSitterByUserId, findServicesBySitterId } from "@/models/sitter.model";
 import { streamService } from "@/services/stream.service";
+import { createNotification } from "@/models/notification.model";
 
 // Generate unique booking code
 const generateBookingCode = (): string => {
@@ -180,6 +181,20 @@ export const acceptBookingRequest = async (c: Context) => {
         } catch (streamError) {
             console.error("Failed to create Stream channel:", streamError);
             // We don't fail the whole request if chat creation fails, but it's not ideal
+        }
+
+        // Create notification for owner
+        if (booking.ownerUserId) {
+            try {
+                const sitterName = sitter.displayName || "A sitter";
+                await createNotification({
+                    userId: booking.ownerUserId,
+                    type: "booking_accepted",
+                    content: `${sitterName} has accepted your booking request!`,
+                });
+            } catch (notifError) {
+                console.error("Failed to create notification:", notifError);
+            }
         }
 
         return c.json({
