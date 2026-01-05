@@ -24,3 +24,20 @@ export const useCreateOwner = () => {
     return mutation;
 };
 
+export const useUpdateOwner = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ownerApi.patchOwner,
+        onSuccess: () => {
+            qc.invalidateQueries({
+                queryKey: ['owner'],
+            });
+        },
+    });
+};
+
+export const useDeleteAccount = () => {
+    return useMutation({
+        mutationFn: ownerApi.deleteAccount,
+    });
+};

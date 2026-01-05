@@ -30,7 +30,7 @@ const sitterFormSchema = z.object({
     headline: z.string().min(5, "Headline must be at least 5 characters"),
     bio: z.string(),
     address: z.string().min(5, "Address must be at least 5 characters"),
-    city: z.string().min(2, "City must be at least 2 characters"),
+    area: z.string().min(2, "Area must be at least 2 characters"),
     location: z.object({
         lat: z.number(),
         lng: z.number(),
@@ -59,7 +59,7 @@ export function SitterRegistrationForm() {
             headline: "",
             bio: "",
             address: "",
-            city: "",
+            area: "",
             location: {
                 lat: 0,
                 lng: 0,
@@ -222,12 +222,12 @@ export function SitterRegistrationForm() {
                                     )}
                                 />
 
-                                {/* City */}
+                                {/* Area */}
                                 <form.Field
-                                    name="city"
+                                    name="area"
                                     children={(field) => (
                                         <Field data-invalid={field.state.meta.isTouched && !field.state.meta.isValid}>
-                                            <FieldLabel htmlFor={field.name}>City</FieldLabel>
+                                            <FieldLabel htmlFor={field.name}>Area</FieldLabel>
                                             <Input
                                                 id={field.name}
                                                 name={field.name}

@@ -16,4 +16,19 @@ export const ownerApi = {
             throw error;
         }
     },
+    patchOwner: async (payload: {
+        displayName?: string;
+        displayImage?: string;
+        phoneNumber?: string;
+        bio?: string;
+        address?: string;
+        area?: string;
+    }) => {
+        const { data } = await apiClient.patch('/owners/profile', payload);
+        return data.owner;
+    },
+    deleteAccount: async () => {
+        const { data } = await apiClient.delete('/users/delete-account');
+        return data;
+    },
 };

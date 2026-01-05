@@ -104,7 +104,7 @@ function Dashboard() {
       case "messages":
         return <Inbox />;
       case "profile":
-        return <Settings owner={owner} user={auth.user} createOwner={createOwner} />;
+        return <Settings owner={owner} user={auth.user} />;
       default:
         return (
           <FindSitters

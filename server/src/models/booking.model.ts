@@ -61,7 +61,7 @@ export const findBookingsByOwnerId = async (ownerId: number, statusFilter?: 'pen
             sitterName: petSitterTable.displayName,
             sitterImage: petSitterTable.displayImage,
             sitterHeadline: petSitterTable.headline,
-            sitterCity: petSitterTable.city,
+            sitterArea: petSitterTable.area,
             sitterAddress: petSitterTable.address,
             sitterRating: petSitterTable.averageRating,
             // Service details
@@ -101,7 +101,7 @@ export const findBookingsBySitterId = async (sitterId: number, statusFilter?: 'p
             // Owner details
             ownerName: petOwnerTable.displayName,
             ownerImage: petOwnerTable.displayImage,
-            ownerCity: petOwnerTable.city,
+            ownerArea: petOwnerTable.area,
             ownerAddress: petOwnerTable.address,
             // Service details
             serviceType: serviceTable.serviceType,
