@@ -95,15 +95,19 @@ export const submitSitterReply = async (c: Context) => {
 
     const updatedReview = await updateReviewReply(reviewId, sitter.id, response);
 
-    // Create notification for owner
+    // Create notification for owner with the reply content
     try {
         const owner = await findOwnerById(review.ownerId);
         if (owner) {
             const sitterName = sitter.displayName || "A sitter";
+            // Truncate long replies for notification display
+            const truncatedReply = response.length > 150 
+                ? response.substring(0, 147) + "..." 
+                : response;
             await createNotification({
                 userId: owner.userId,
                 type: "review_reply",
-                content: `${sitterName} replied to your review!`,
+                content: `${sitterName} replied to your review: "${truncatedReply}"`,
             });
         }
     } catch (notifError) {
