@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { findOwnerByUserId, findOwnerById } from "@/models/owner.model";
-import { findSitterByUserId, findSitterById, incrementSitterTotalReviews, updateSitterRating } from "@/models/sitter.model";
+import { findSitterByUserId, findSitterById, incrementSitterTotalReviews, updateSitterRating, addServiceEarning } from "@/models/sitter.model";
 import { findBookingById, deleteBooking } from "@/models/booking.model";
 import { 
     createReview, 
@@ -36,6 +36,8 @@ export const submitReview = async (c: Context) => {
     });
 
     if (review) {
+        // Add earnings to service before deleting booking
+        await addServiceEarning(booking.serviceId, booking.totalPrice);
         await deleteBooking(bookingId);
         await incrementSitterTotalReviews(booking.sitterId);
         await updateSitterRating(booking.sitterId);

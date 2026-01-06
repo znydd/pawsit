@@ -70,6 +70,18 @@ export const updateSitterRating = async (sitterId: number) => {
     return updated;
 };
 
+// Add earnings to a service's total earning
+export const addServiceEarning = async (serviceId: number, amount: number) => {
+    const [updated] = await db
+        .update(serviceTable)
+        .set({
+            totalEarning: sql`${serviceTable.totalEarning} + ${amount}`,
+            updatedAt: new Date()
+        })
+        .where(eq(serviceTable.id, serviceId))
+        .returning();
+    return updated;
+};
 
 // Create a new service
 export const createServiceRecord = async (data: NewService) => {

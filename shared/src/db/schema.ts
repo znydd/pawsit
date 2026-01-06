@@ -47,6 +47,7 @@ export const serviceTable = pgTable("service", {
     sitterId: integer("sitter_id").notNull().references(() => petSitterTable.id, { onDelete: 'cascade' }),
     serviceType: varchar("service_type").notNull(),
     pricePerDay: doublePrecision("price_per_day").notNull(),
+    totalEarning: doublePrecision("total_earning").default(0).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

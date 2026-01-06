@@ -154,7 +154,7 @@ export function SitterOverview({ setActiveTab }: SitterOverviewProps) {
 
                 <Card className="bg-background p-6 rounded-lg border-border shadow-sm">
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2">Total Earnings</p>
-                    <p className="text-4xl font-bold text-foreground">0 <span className="text-sm font-mono font-medium text-muted-foreground">৳</span></p>
+                    <p className="text-4xl font-bold text-foreground">{services?.[0]?.totalEarning || 0} <span className="text-sm font-mono font-medium text-muted-foreground">৳</span></p>
                 </Card>
 
                 <Card className="bg-background p-6 rounded-lg border-border shadow-sm">

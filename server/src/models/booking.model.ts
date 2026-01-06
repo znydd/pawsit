@@ -23,6 +23,8 @@ export const findBookingById = async (bookingId: number) => {
             id: bookingTable.id,
             sitterId: bookingTable.sitterId,
             ownerId: bookingTable.ownerId,
+            serviceId: bookingTable.serviceId,
+            totalPrice: bookingTable.totalPrice,
             isAccepted: bookingTable.isAccepted,
             sitterUserId: petSitterTable.userId,
             ownerUserId: petOwnerTable.userId,
