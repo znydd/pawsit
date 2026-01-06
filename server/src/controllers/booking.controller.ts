@@ -208,16 +208,11 @@ export const acceptBookingRequest = async (c: Context) => {
     }
 };
 
-// Delete booking request (owner deletes pending request)
+// Delete booking request (owner cancels or sitter declines pending request)
 export const deleteBookingRequest = async (c: Context) => {
     const user = c.get("user");
     if (!user) {
         return c.json({ success: false, message: "Not authenticated" }, 401);
-    }
-
-    const owner = await findOwnerByUserId(user.id);
-    if (!owner) {
-        return c.json({ success: false, message: "Owner profile not found" }, 404);
     }
 
     const bookingIdStr = c.req.param("id");
@@ -234,20 +229,40 @@ export const deleteBookingRequest = async (c: Context) => {
             return c.json({ success: false, message: "Booking not found" }, 404);
         }
 
-        // Verify booking belongs to this owner
-        if (booking.ownerId !== owner.id) {
+        // Check if booking is accepted (cannot delete accepted bookings via this endpoint)
+        if (booking.isAccepted) {
+            return c.json({
+                success: false,
+                message: "Cannot delete accepted booking via this endpoint",
+            }, 400);
+        }
+
+        // Check if user is owner or sitter of this booking
+        const owner = await findOwnerByUserId(user.id);
+        const sitter = await findSitterByUserId(user.id);
+
+        const isOwner = owner && booking.ownerId === owner.id;
+        const isSitter = sitter && booking.sitterId === sitter.id;
+
+        if (!isOwner && !isSitter) {
             return c.json({
                 success: false,
                 message: "You are not authorized to delete this booking",
             }, 403);
         }
 
-        // Check if booking is accepted (cannot delete accepted bookings)
-        if (booking.isAccepted) {
-            return c.json({
-                success: false,
-                message: "Cannot delete accepted booking",
-            }, 400);
+        // If sitter declines, notify the owner
+        if (isSitter && booking.ownerUserId) {
+            try {
+                const sitterName = sitter.displayName || "A sitter";
+                await createNotification({
+                    userId: booking.ownerUserId,
+                    type: "booking_declined",
+                    content: `${sitterName} has declined your booking request.`,
+                });
+            } catch (notifError) {
+                console.error("Failed to send decline notification:", notifError);
+            }
         }
 
         // Delete the booking
@@ -255,7 +270,7 @@ export const deleteBookingRequest = async (c: Context) => {
 
         return c.json({
             success: true,
-            message: "Booking deleted successfully",
+            message: isSitter ? "Booking declined successfully" : "Booking deleted successfully",
         });
     } catch (error) {
         console.error("Delete booking error:", error);

@@ -24,6 +24,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useCreateSitter } from "@/hooks/useSitter"
 import { useUpload } from "@/hooks/useUpload"
+import { DHAKA_AREAS } from "shared/src/constants"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 const sitterFormSchema = z.object({
     phoneNumber: z.string().min(11, "Phone number must be at least 11 characters"),
@@ -222,21 +230,27 @@ export function SitterRegistrationForm() {
                                     )}
                                 />
 
-                                {/* Area */}
+                                 {/* Area */}
                                 <form.Field
                                     name="area"
                                     children={(field) => (
                                         <Field data-invalid={field.state.meta.isTouched && !field.state.meta.isValid}>
                                             <FieldLabel htmlFor={field.name}>Area</FieldLabel>
-                                            <Input
-                                                id={field.name}
-                                                name={field.name}
+                                            <Select
                                                 value={field.state.value}
-                                                onBlur={field.handleBlur}
-                                                onChange={(e) => field.handleChange(e.target.value)}
-                                                placeholder="Dhaka"
-                                                className="rounded-md"
-                                            />
+                                                onValueChange={(value) => field.handleChange(value)}
+                                            >
+                                                <SelectTrigger className="rounded-md">
+                                                    <SelectValue placeholder="Select an area in Dhaka" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {DHAKA_AREAS.map((area) => (
+                                                        <SelectItem key={area} value={area}>
+                                                            {area}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             <FieldError errors={field.state.meta.errors} />
                                         </Field>
                                     )}

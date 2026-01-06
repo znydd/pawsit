@@ -16,6 +16,7 @@ const dashboardSearchSchema = z.object({
   lat: z.number().optional(),
   lng: z.number().optional(),
   radius: z.number().optional(),
+  area: z.string().optional(),
   filters: z.array(z.string()).optional().default(["All"]),
   channelId: z.string().optional(),
 });
@@ -42,10 +43,13 @@ function Dashboard() {
     }
   }, [search.channelId]);
 
-  const [bookedSitterIds, setBookedSitterIds] = useState<number[]>([]);
 
   // Derived search state from URL
-  const searchParams = search.lat && search.lng ? { lat: search.lat, lng: search.lng, radius: search.radius || 5000 } : null;
+  const searchParams = search.area 
+    ? { area: search.area } 
+    : search.lat && search.lng 
+      ? { lat: search.lat, lng: search.lng, radius: search.radius || 5000 } 
+      : null;
   const selectedRadius = (search.radius || 5000) / 1000;
   const selectedFilters = search.filters || ["All"];
 
@@ -87,7 +91,12 @@ function Dashboard() {
         return (
           <FindSitters
             searchParams={searchParams}
-            setSearchParams={(params) => updateSearch({ lat: params?.lat, lng: params?.lng, radius: params?.radius })}
+            setSearchParams={(params) => updateSearch({ 
+                lat: params?.lat, 
+                lng: params?.lng, 
+                radius: params?.radius,
+                area: params?.area 
+            })}
             selectedRadius={selectedRadius}
             setSelectedRadius={(radius) => updateSearch({ radius: radius ? radius * 1000 : undefined })}
             selectedFilters={selectedFilters}
@@ -95,8 +104,7 @@ function Dashboard() {
               const newFilters = typeof filters === 'function' ? filters(selectedFilters) : filters;
               updateSearch({ filters: newFilters });
             }}
-            bookedSitterIds={bookedSitterIds}
-            setBookedSitterIds={setBookedSitterIds}
+
           />
         );
       case "requests":
@@ -109,7 +117,12 @@ function Dashboard() {
         return (
           <FindSitters
             searchParams={searchParams}
-            setSearchParams={(params) => updateSearch({ lat: params?.lat, lng: params?.lng, radius: params?.radius })}
+            setSearchParams={(params) => updateSearch({ 
+                lat: params?.lat, 
+                lng: params?.lng, 
+                radius: params?.radius,
+                area: params?.area 
+            })}
             selectedRadius={selectedRadius}
             setSelectedRadius={(radius) => updateSearch({ radius: radius ? radius * 1000 : undefined })}
             selectedFilters={selectedFilters}
@@ -117,8 +130,7 @@ function Dashboard() {
               const newFilters = typeof filters === 'function' ? filters(selectedFilters) : filters;
               updateSearch({ filters: newFilters });
             }}
-            bookedSitterIds={bookedSitterIds}
-            setBookedSitterIds={setBookedSitterIds}
+
           />
         );
     }

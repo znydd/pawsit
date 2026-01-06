@@ -63,7 +63,7 @@ async function main() {
             displayImage: `https://api.dicebear.com/7.x/avataaars/svg?seed=${mock.id}`,
             phoneNumber: "01711111111",
             address: mock.address,
-            city: mock.city,
+            area: mock.city,
             location: mock.location,
             isSitter: true,
         }).onConflictDoNothing();
@@ -77,7 +77,7 @@ async function main() {
             headline: `Professional sitter in ${mock.address}`,
             bio: "I love pets and have plenty of space for them to play.",
             address: mock.address,
-            city: mock.city,
+            area: mock.city,
             location: mock.location,
             experienceYears: 3,
             nidImage: "https://example.com/nid.jpg",

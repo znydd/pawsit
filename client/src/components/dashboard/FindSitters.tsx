@@ -1,5 +1,4 @@
-import { Search, MapPin, Star, Navigation, Loader2, Calendar } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { MapPin, Star, Navigation, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,16 +17,23 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { DHAKA_AREAS } from "shared/src/constants";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
 
 interface FindSittersProps {
-    searchParams: { lat: number; lng: number; radius: number } | null;
-    setSearchParams: (params: { lat: number; lng: number; radius: number } | null) => void;
+    searchParams: { lat?: number; lng?: number; radius?: number; area?: string } | null;
+    setSearchParams: (params: { lat?: number; lng?: number; radius?: number; area?: string } | null) => void;
     selectedRadius: number | null;
     setSelectedRadius: (radius: number | null) => void;
     selectedFilters: string[];
     setSelectedFilters: (filters: string[] | ((prev: string[]) => string[])) => void;
-    bookedSitterIds: number[];
-    setBookedSitterIds: (ids: number[] | ((prev: number[]) => number[])) => void;
 }
 
 export function FindSitters({
@@ -36,19 +42,15 @@ export function FindSitters({
     selectedRadius,
     setSelectedRadius,
     selectedFilters,
-    setSelectedFilters,
-    bookedSitterIds,
-    setBookedSitterIds
+    setSelectedFilters
 }: FindSittersProps) {
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
     const [selectedSitter, setSelectedSitter] = useState<any>(null);
     const [specialRequest, setSpecialRequest] = useState("");
+    const [open, setOpen] = useState(false);
 
     const { data: sitters, isLoading } = useSearchSitters(searchParams);
     const createBooking = useCreateBooking();
-
-    // Filter out sitters that have just been booked in this session
-    const displaySitters = sitters?.filter((s: any) => !bookedSitterIds.includes(s.id));
 
     const petFilters = ["All", "Cats", "Dogs", "Fish", "Bird", "Other"];
 
@@ -117,9 +119,6 @@ export function FindSitters({
                 specialRequest: specialRequest.trim() || undefined
             });
 
-            // Immediately remove from local list
-            setBookedSitterIds(prev => [...prev, sitterIdToBook]);
-
             setIsBookingDialogOpen(false);
             setSpecialRequest("");
         } catch (error) {
@@ -133,15 +132,43 @@ export function FindSitters({
             <div className="flex flex-col lg:flex-row gap-6 justify-between items-stretch bg-background border border-border p-6 rounded-lg shadow-sm">
                 {/* Left Side: Manual Search & Pet Filters (flex-[3]) */}
                 <div className="flex-3 w-full space-y-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative">
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Manual Search</p>
-                        <div className="relative group w-full">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors" />
-                            <Input
+                        <Command 
+                            key={searchParams?.area} 
+                            className="rounded-md border border-border bg-background shadow-sm overflow-visible h-10 **:data-[slot=command-input-wrapper]:border-b-0"
+                            value={searchParams?.area || ""}
+                        >
+                            <CommandInput
                                 placeholder="Search by area (e.g. Banani, Dhaka...)"
-                                className="pl-9 h-10 rounded-md border-border shadow-sm focus-visible:ring-primary w-full"
+                                className="h-10"
+                                onFocus={() => setOpen(true)}
+                                onBlur={() => setTimeout(() => setOpen(false), 200)}
                             />
-                        </div>
+                            {open && (
+                                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 bg-popover border border-border rounded-md shadow-md animate-in fade-in slide-in-from-top-1 duration-200">
+                                    <CommandList className="max-h-[300px] overflow-y-auto">
+                                        <CommandEmpty className="p-4 text-sm text-center text-muted-foreground">No area found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {DHAKA_AREAS.map((area) => (
+                                                <CommandItem
+                                                    key={area}
+                                                    value={area}
+                                                    onSelect={() => {
+                                                        setSearchParams({ area });
+                                                        setOpen(false);
+                                                    }}
+                                                    className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                                                >
+                                                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                                                    <span>{area}</span>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </div>
+                            )}
+                        </Command>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -208,9 +235,9 @@ export function FindSitters({
                         <div key={i} className="h-64 rounded-lg bg-secondary/20 animate-pulse border border-border" />
                     ))}
                 </div>
-            ) : displaySitters && displaySitters.length > 0 ? (
+            ) : sitters && sitters.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {displaySitters.map((sitter: any) => (
+                    {sitters.map((sitter: any) => (
                         <Card key={sitter.id} className="overflow-hidden border-border shadow-none hover:border-primary/30 hover:shadow-md transition-all group flex flex-col">
                             <div className="h-32 relative overflow-hidden shrink-0">
                                 <img
@@ -244,7 +271,7 @@ export function FindSitters({
 
                                     <div className="space-y-1 mb-2">
                                         <p className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
-                                            <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{sitter.city}, {sitter.address}</span>
+                                            <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{sitter.area}, {sitter.address}</span>
                                         </p>
                                         {sitter.distance !== undefined && (
                                             <p className="text-[10px] text-primary font-semibold">

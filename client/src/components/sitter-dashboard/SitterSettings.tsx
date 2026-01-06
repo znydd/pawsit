@@ -12,6 +12,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useUpdateSitter } from "@/hooks/useSitter";
 import { useUpload } from "@/hooks/useUpload";
 import { useRef, useState } from "react";
+import { DHAKA_AREAS } from "shared/src/constants";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const sitterProfileSchema = z.object({
     displayName: z.string().min(2, "Name must be at least 2 characters"),
@@ -25,6 +33,7 @@ const sitterProfileSchema = z.object({
     acceptsFish: z.boolean(),
     acceptsBirds: z.boolean(),
     acceptsOtherPets: z.boolean(),
+    area: z.string().min(2, "Area is required"),
 });
 
 type SitterProfileValues = z.infer<typeof sitterProfileSchema>;
@@ -52,6 +61,7 @@ export function SitterSettings({ sitter, user }: { sitter: any; user: any }) {
             acceptsFish: sitter?.acceptsFish ?? false,
             acceptsBirds: sitter?.acceptsBirds ?? false,
             acceptsOtherPets: sitter?.acceptsOtherPets ?? false,
+            area: sitter?.area || "",
         } as SitterProfileValues,
         validators: {
             onSubmit: sitterProfileSchema,
@@ -70,6 +80,7 @@ export function SitterSettings({ sitter, user }: { sitter: any; user: any }) {
                     acceptsFish: value.acceptsFish,
                     acceptsBirds: value.acceptsBirds,
                     acceptsOtherPets: value.acceptsOtherPets,
+                    area: value.area,
                     displayImage: previewImage || sitter?.displayImage || undefined,
                 });
                 toast.success("Profile Updated");
@@ -208,6 +219,32 @@ export function SitterSettings({ sitter, user }: { sitter: any; user: any }) {
                                         )}
                                     />
                                 </div>
+                                <form.Field
+                                    name="area"
+                                    children={(field) => (
+                                        <Field>
+                                            <FieldLabel className="text-xs font-semibold tracking-tight uppercase text-muted-foreground mb-1.5">
+                                                Area
+                                            </FieldLabel>
+                                            <Select
+                                                value={field.state.value}
+                                                onValueChange={(value) => field.handleChange(value)}
+                                            >
+                                                <SelectTrigger className="h-10 text-sm">
+                                                    <SelectValue placeholder="Select area" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {DHAKA_AREAS.map((area) => (
+                                                        <SelectItem key={area} value={area}>
+                                                            {area}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FieldError errors={field.state.meta.errors} />
+                                        </Field>
+                                    )}
+                                />
                                 <form.Field
                                     name="headline"
                                     children={(field) => (

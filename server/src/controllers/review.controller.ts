@@ -1,8 +1,7 @@
 import type { Context } from "hono";
 import { findOwnerByUserId, findOwnerById } from "@/models/owner.model";
-import { findSitterByUserId, findSitterById } from "@/models/sitter.model";
+import { findSitterByUserId, findSitterById, incrementSitterTotalReviews, updateSitterRating } from "@/models/sitter.model";
 import { findBookingById, deleteBooking } from "@/models/booking.model";
-import { incrementSitterTotalReviews } from "@/models/sitter.model";
 import { 
     createReview, 
     findReviewsBySitterId, 
@@ -39,6 +38,7 @@ export const submitReview = async (c: Context) => {
     if (review) {
         await deleteBooking(bookingId);
         await incrementSitterTotalReviews(booking.sitterId);
+        await updateSitterRating(booking.sitterId);
         // Remove chat channel associated with this booking
         try {
             await streamService.deleteChannel(bookingId);

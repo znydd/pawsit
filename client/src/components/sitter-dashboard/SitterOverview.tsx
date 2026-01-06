@@ -4,10 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useSitterBookings, useAcceptBooking } from "@/hooks/useBooking";
+import { useSitterBookings, useAcceptBooking, useDeclineBooking } from "@/hooks/useBooking";
+import { useSitter, useSitterServices, useUpdateService, useUpdateAvailability } from "@/hooks/useSitter";
 import { bookingApi } from "@/api/endpoints/booking";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -18,25 +19,52 @@ interface SitterOverviewProps {
 export function SitterOverview({ setActiveTab }: SitterOverviewProps) {
     const [isAvailable, setIsAvailable] = useState(true);
     const [isPriceEditing, setIsPriceEditing] = useState(false);
-    const [dailyCharge, setDailyCharge] = useState(1200);
+    const [dailyCharge, setDailyCharge] = useState(0);
     const [bookingTab, setBookingTab] = useState<"requests" | "accepted">("requests");
 
     const { data: requests, isLoading: isRequestsLoading } = useSitterBookings('pending');
     const { data: accepted, isLoading: isAcceptedLoading } = useSitterBookings('accepted');
     const acceptBooking = useAcceptBooking();
 
+    // Fetch services and availability
+    const { data: sitter } = useSitter();
+    const { data: services } = useSitterServices();
+    const updateService = useUpdateService();
+    const updateAvailability = useUpdateAvailability();
+
+    // Sync local state with fetched data
+    useEffect(() => {
+        if (services && services.length > 0) {
+            setDailyCharge(services[0].pricePerDay || 0);
+        }
+    }, [services]);
+
     const handleToggleAvailability = (checked: boolean) => {
         setIsAvailable(checked);
-        toast.success(checked ? "Now Accepting Pets" : "Host Offline");
+        updateAvailability.mutate({ isAvailable: checked }, {
+            onSuccess: () => toast.success(checked ? "Now Accepting Pets" : "Host Offline"),
+            onError: () => toast.error("Failed to update availability"),
+        });
     };
 
     const handlePriceSave = () => {
         setIsPriceEditing(false);
-        toast.success(`Charge synced: ${dailyCharge} ৳`);
+        updateService.mutate({ pricePerDay: dailyCharge }, {
+            onSuccess: () => toast.success(`Charge synced: ${dailyCharge} ৳`),
+            onError: () => toast.error("Failed to update price"),
+        });
     };
 
-    const handleAccept = async (id: number) => {
-        await acceptBooking.mutateAsync(id);
+    const handleAccept = (id: number) => {
+        acceptBooking.mutate(id);
+    };
+
+    const declineBooking = useDeclineBooking();
+
+    const handleDecline = (id: number) => {
+        if (confirm("Are you sure you want to decline this booking request?")) {
+            declineBooking.mutate(id);
+        }
     };
 
     const handleChatClick = async (bookingId: number) => {
@@ -132,7 +160,9 @@ export function SitterOverview({ setActiveTab }: SitterOverviewProps) {
                 <Card className="bg-background p-6 rounded-lg border-border shadow-sm">
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2">Host Rating</p>
                     <div className="flex items-center gap-2">
-                        <p className="text-4xl font-bold text-foreground">New</p>
+                        <p className="text-4xl font-bold text-foreground">
+                            {sitter?.averageRating ? sitter.averageRating.toFixed(1) : "New"}
+                        </p>
                         <Star className="text-yellow-500 w-6 h-6 fill-current" />
                     </div>
                 </Card>
@@ -195,13 +225,20 @@ export function SitterOverview({ setActiveTab }: SitterOverviewProps) {
                                         </div>
                                     </div>
                                     <div className="flex gap-2 w-full md:w-auto">
-                                        <Button variant="outline" size="sm" className="hidden sm:inline-flex rounded-md px-4 h-8 text-[11px] font-bold uppercase tracking-tight">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            onClick={() => handleDecline(r.id)}
+                                            disabled={declineBooking.isPending || acceptBooking.isPending}
+                                            className="hidden sm:inline-flex rounded-md px-4 h-8 text-[11px] font-bold uppercase tracking-tight"
+                                        >
+                                            {declineBooking.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : null}
                                             Decline
                                         </Button>
                                         <Button 
                                             size="sm" 
                                             onClick={() => handleAccept(r.id)} 
-                                            disabled={acceptBooking.isPending}
+                                            disabled={acceptBooking.isPending || declineBooking.isPending}
                                             className="flex-1 sm:flex-none rounded-md px-6 h-8 text-[11px] font-bold uppercase tracking-tight"
                                         >
                                             {acceptBooking.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : null}

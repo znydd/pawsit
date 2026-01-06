@@ -1,0 +1,27 @@
+export const DHAKA_AREAS = [
+    "Banani",
+    "Gulshan",
+    "Uttara",
+    "Mirpur",
+    "Dhanmondi",
+    "Mohammadpur",
+    "Badda",
+    "Khilgaon",
+    "Motijheel",
+    "Jatrabari",
+    "Bashundhara",
+    "Baridhara",
+    "Cantonment",
+    "Farmgate",
+    "Tejgaon",
+    "Mogbazar",
+    "Malibagh",
+    "Shanti Nagar",
+    "Wari",
+    "Lalbagh",
+    "Nikunja",
+    "Basundhara R/A",
+    "Purbachal",
+] as const;
+
+export type DhakaArea = (typeof DHAKA_AREAS)[number];

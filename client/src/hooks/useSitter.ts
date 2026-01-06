@@ -24,11 +24,11 @@ export const useCreateSitter = () => {
     });
     return mutation;
 };
-export const useSearchSitters = (params: { lat: number; lng: number; radius: number } | null) => {
+export const useSearchSitters = (params: { lat?: number; lng?: number; radius?: number; area?: string } | null) => {
     return useQuery({
         queryKey: ['sitters', 'search', params],
         queryFn: () => sitterApi.searchSitters(params!),
-        enabled: !!params,
+        enabled: !!params && (!!params.area || (!!params.lat && !!params.lng)),
     });
 };
 
@@ -59,6 +59,33 @@ export const useUpdateSitter = () => {
             qc.invalidateQueries({
                 queryKey: ['sitter'],
             });
+        },
+    });
+};
+
+export const useSitterServices = () => {
+    return useQuery({
+        queryKey: ['sitter-services'],
+        queryFn: sitterApi.getServices,
+    });
+};
+
+export const useUpdateService = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: sitterApi.updateService,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['sitter-services'] });
+        },
+    });
+};
+
+export const useUpdateAvailability = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: sitterApi.updateAvailability,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['sitter'] });
         },
     });
 };

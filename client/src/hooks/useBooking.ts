@@ -64,3 +64,18 @@ export const useDeleteBooking = () => {
         }
     });
 };
+
+// Sitter: Decline booking
+export const useDeclineBooking = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: bookingApi.deleteBooking,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['bookings', 'sitter', 'pending'] });
+            toast.success("Booking declined.");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to decline booking");
+        }
+    });
+};

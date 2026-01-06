@@ -16,9 +16,9 @@ export const sitterApi = {
             throw error;
         }
     },
-    searchSitters: async (params: { lat: number; lng: number; radius: number }) => {
-        console.log(params);
-        const { data } = await apiClient.get('/sitters/search', { params });
+    searchSitters: async (params: { lat?: number; lng?: number; radius?: number; area?: string }) => {
+        const endpoint = params.area ? '/sitters/manual-search' : '/sitters/search';
+        const { data } = await apiClient.get(endpoint, { params });
         return data.sitters;
     },
     getPhotos: async () => {
@@ -35,6 +35,7 @@ export const sitterApi = {
         phoneNumber?: string;
         headline?: string;
         bio?: string;
+        area?: string;
         experienceYears?: number;
         acceptsLargeDogs?: boolean;
         acceptsSmallDogs?: boolean;
@@ -45,5 +46,17 @@ export const sitterApi = {
     }) => {
         const { data } = await apiClient.patch('/sitters/profile', payload);
         return data.sitter;
+    },
+    getServices: async () => {
+        const { data } = await apiClient.get('/sitters/services');
+        return data.services;
+    },
+    updateService: async (payload: { pricePerDay?: number; serviceType?: string; isActive?: boolean }) => {
+        const { data } = await apiClient.patch('/sitters/services', payload);
+        return data.service;
+    },
+    updateAvailability: async (payload: { isAvailable: boolean }) => {
+        const { data } = await apiClient.patch('/sitters/availability', payload);
+        return data.availability;
     },
 };

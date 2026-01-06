@@ -4,6 +4,7 @@ import { eq, desc, and } from "drizzle-orm";
 
 export type NotificationType = 
     | 'booking_accepted'
+    | 'booking_declined'
     | 'review_received'
     | 'review_reply';
 
