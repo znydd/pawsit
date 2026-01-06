@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { useSitter } from "@/hooks/useSitter"
 import { Spinner } from "@/components/ui/spinner"
 import { useState, useEffect } from "react"
@@ -12,6 +12,7 @@ import { SitterReviews } from "@/components/sitter-dashboard/SitterReviews"
 import { SitterGallery } from "@/components/sitter-dashboard/SitterGallery"
 import { SitterSettings } from "@/components/sitter-dashboard/SitterSettings"
 import { useAuth } from "@/lib/auth"
+import { ownerApi } from "@/api/endpoints/owner"
 
 const sitterDashboardSearchSchema = z.object({
   channelId: z.string().optional(),
@@ -19,6 +20,13 @@ const sitterDashboardSearchSchema = z.object({
 
 export const Route = createFileRoute("/_authenticated/sitter/dashboard")({
   validateSearch: (search) => sitterDashboardSearchSchema.parse(search),
+  beforeLoad: async () => {
+    // Check if owner profile exists before loading sitter dashboard
+    const owner = await ownerApi.getOwner();
+    if (!owner) {
+      throw redirect({ to: "/dashboard", search: { filters: ["All"] } });
+    }
+  },
   component: SitterDashboardRoot,
 })
 
