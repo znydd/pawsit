@@ -1,4 +1,4 @@
-import { MapPin, Star, Navigation, Loader2, Calendar } from "lucide-react";
+import { MapPin, Star, Navigation, Loader2, Calendar, Images, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchSitters } from "@/hooks/useSitter";
 import { useCreateBooking } from "@/hooks/useBooking";
+import { sitterApi } from "@/api/endpoints/sitter";
 import {
     Dialog,
     DialogContent,
@@ -48,6 +49,9 @@ export function FindSitters({
     const [selectedSitter, setSelectedSitter] = useState<any>(null);
     const [specialRequest, setSpecialRequest] = useState("");
     const [open, setOpen] = useState(false);
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+    const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
+    const [isLoadingGallery, setIsLoadingGallery] = useState(false);
 
     const { data: sitters, isLoading } = useSearchSitters(searchParams);
     const createBooking = useCreateBooking();
@@ -137,6 +141,33 @@ export function FindSitters({
     const handleBookSitter = (sitter: any) => {
         setSelectedSitter(sitter);
         setIsBookingDialogOpen(true);
+    };
+
+    const handleViewGallery = async () => {
+        if (!selectedSitter) return;
+        
+        setIsLoadingGallery(true);
+        try {
+            const photos = await sitterApi.getSitterPhotosById(selectedSitter.id);
+            setGalleryPhotos(photos || []);
+            setIsGalleryOpen(true);
+        } catch (error) {
+            toast.error("Failed to load gallery");
+        } finally {
+            setIsLoadingGallery(false);
+        }
+    };
+
+    const handleViewLocation = () => {
+        if (!selectedSitter?.location) {
+            toast.error("Location not available");
+            return;
+        }
+        // location is stored as {x: lng, y: lat} in PostGIS format
+        const lat = selectedSitter.location.y;
+        const lng = selectedSitter.location.x;
+        const url = `https://www.google.com/maps?q=${lat},${lng}`;
+        window.open(url, "_blank");
     };
 
     const confirmBooking = async () => {
@@ -366,6 +397,29 @@ export function FindSitters({
                             </div>
                         </div>
 
+                        {/* Gallery and Location buttons */}
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleViewGallery}
+                                disabled={isLoadingGallery}
+                                className="flex-1 gap-2"
+                            >
+                                {isLoadingGallery ? <Loader2 className="w-4 h-4 animate-spin" /> : <Images className="w-4 h-4" />}
+                                View Gallery
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleViewLocation}
+                                className="flex-1 gap-2"
+                            >
+                                <ExternalLink className="w-4 h-4" />
+                                View Location
+                            </Button>
+                        </div>
+
                         <div className="space-y-2">
                             <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Special Request (Optional)</label>
                             <Textarea
@@ -388,6 +442,33 @@ export function FindSitters({
                             Send Request
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Gallery Dialog */}
+            <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+                <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{selectedSitter?.displayName}'s Environment</DialogTitle>
+                    </DialogHeader>
+                    
+                    {galleryPhotos.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-3 py-4">
+                            {galleryPhotos.map((photo: any) => (
+                                <div key={photo.id} className="aspect-video rounded-lg overflow-hidden border border-border">
+                                    <img
+                                        src={photo.imageUrl}
+                                        alt={photo.caption || "Sitter environment"}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center py-12 text-muted-foreground">
+                            No photos available
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
         </div>
