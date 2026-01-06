@@ -43,7 +43,6 @@ function Dashboard() {
     }
   }, [search.channelId]);
 
-  const [bookedSitterIds, setBookedSitterIds] = useState<number[]>([]);
 
   // Derived search state from URL
   const searchParams = search.area 
@@ -105,8 +104,7 @@ function Dashboard() {
               const newFilters = typeof filters === 'function' ? filters(selectedFilters) : filters;
               updateSearch({ filters: newFilters });
             }}
-            bookedSitterIds={bookedSitterIds}
-            setBookedSitterIds={setBookedSitterIds}
+
           />
         );
       case "requests":
@@ -132,8 +130,7 @@ function Dashboard() {
               const newFilters = typeof filters === 'function' ? filters(selectedFilters) : filters;
               updateSearch({ filters: newFilters });
             }}
-            bookedSitterIds={bookedSitterIds}
-            setBookedSitterIds={setBookedSitterIds}
+
           />
         );
     }

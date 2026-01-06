@@ -18,8 +18,10 @@ export const useSubmitReview = () => {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['bookings', 'owner'] });
             qc.invalidateQueries({ queryKey: ['reviews', 'sitter'] });
+            qc.invalidateQueries({ queryKey: ['sitters', 'search'] });
             toast.success("Review submitted! Booking completed.");
         },
+
         onError: (error: any) => {
             toast.error(error.response?.data?.message || "Failed to submit review");
         }
