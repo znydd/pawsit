@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { petSitterTable, petOwnerTable, serviceTable, sitterAvailabilityTable, bookingTable, sitterPhotoTable } from "shared/src/db/schema";
+import { petSitterTable, petOwnerTable, serviceTable, sitterAvailabilityTable, bookingTable, sitterPhotoTable, reviewTable } from "shared/src/db/schema";
 import { eq, sql, and, ne, notExists } from "drizzle-orm";
 import type { NewPetSitter, NewService, NewSitterAvailability, NewSitterPhoto } from "shared/src";
 
@@ -44,6 +44,26 @@ export const incrementSitterTotalReviews = async (sitterId: number) => {
         .set({
             totalReviews: sql`${petSitterTable.totalReviews} + 1`,
             updatedAt: new Date(),
+        })
+        .where(eq(petSitterTable.id, sitterId))
+        .returning();
+    return updated;
+};
+
+// Calculate and update sitter's average rating from all reviews
+export const updateSitterRating = async (sitterId: number) => {
+    const result = await db
+        .select({ avgRating: sql<number>`COALESCE(AVG(${reviewTable.rating}), 0)` })
+        .from(reviewTable)
+        .where(eq(reviewTable.sitterId, sitterId));
+    
+    const avgRating = result[0]?.avgRating || 0;
+    
+    const [updated] = await db
+        .update(petSitterTable)
+        .set({ 
+            averageRating: avgRating, 
+            updatedAt: new Date() 
         })
         .where(eq(petSitterTable.id, sitterId))
         .returning();

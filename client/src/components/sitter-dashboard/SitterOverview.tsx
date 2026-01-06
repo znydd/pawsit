@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useSitterBookings, useAcceptBooking, useDeclineBooking } from "@/hooks/useBooking";
-import { useSitterServices, useUpdateService, useUpdateAvailability } from "@/hooks/useSitter";
+import { useSitter, useSitterServices, useUpdateService, useUpdateAvailability } from "@/hooks/useSitter";
 import { bookingApi } from "@/api/endpoints/booking";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -27,6 +27,7 @@ export function SitterOverview({ setActiveTab }: SitterOverviewProps) {
     const acceptBooking = useAcceptBooking();
 
     // Fetch services and availability
+    const { data: sitter } = useSitter();
     const { data: services } = useSitterServices();
     const updateService = useUpdateService();
     const updateAvailability = useUpdateAvailability();
@@ -159,7 +160,9 @@ export function SitterOverview({ setActiveTab }: SitterOverviewProps) {
                 <Card className="bg-background p-6 rounded-lg border-border shadow-sm">
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2">Host Rating</p>
                     <div className="flex items-center gap-2">
-                        <p className="text-4xl font-bold text-foreground">New</p>
+                        <p className="text-4xl font-bold text-foreground">
+                            {sitter?.averageRating ? sitter.averageRating.toFixed(1) : "New"}
+                        </p>
                         <Star className="text-yellow-500 w-6 h-6 fill-current" />
                     </div>
                 </Card>
