@@ -4,7 +4,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchSitters } from "@/hooks/useSitter";
 import { useCreateBooking } from "@/hooks/useBooking";
@@ -53,6 +53,38 @@ export function FindSitters({
     const createBooking = useCreateBooking();
 
     const petFilters = ["All", "Cats", "Dogs", "Fish", "Bird", "Other"];
+
+    // Apply frontend filtering only for manual search (area search)
+    const filteredSitters = useMemo(() => {
+        if (!sitters) return [];
+        
+        // Only apply filtering for manual/area search
+        const isManualSearch = searchParams?.area && !searchParams?.lat;
+        if (!isManualSearch || selectedFilters.includes("All")) {
+            return sitters;
+        }
+
+        return sitters.filter((sitter: any) => {
+            // Check if sitter accepts at least one of the selected pet types
+            return selectedFilters.some((filter) => {
+                switch (filter) {
+                    case "Cats":
+                        return sitter.acceptsCats;
+                    case "Dogs":
+                        return sitter.acceptsSmallDogs || sitter.acceptsLargeDogs;
+                    case "Fish":
+                        return sitter.acceptsFish;
+                    case "Bird":
+                        return sitter.acceptsBirds;
+                    case "Other":
+                        return sitter.acceptsOtherPets;
+                    default:
+                        return true;
+                }
+            });
+        });
+    }, [sitters, selectedFilters, searchParams]);
+
 
     const toggleFilter = (filter: string) => {
         if (filter === "All") {
@@ -235,9 +267,9 @@ export function FindSitters({
                         <div key={i} className="h-64 rounded-lg bg-secondary/20 animate-pulse border border-border" />
                     ))}
                 </div>
-            ) : sitters && sitters.length > 0 ? (
+            ) : filteredSitters && filteredSitters.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {sitters.map((sitter: any) => (
+                    {filteredSitters.map((sitter: any) => (
                         <Card key={sitter.id} className="overflow-hidden border-border shadow-none hover:border-primary/30 hover:shadow-md transition-all group flex flex-col">
                             <div className="h-32 relative overflow-hidden shrink-0">
                                 <img
