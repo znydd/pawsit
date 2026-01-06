@@ -9,7 +9,8 @@ import {
     getSittersByArea,
     patchSitterProfile,
     getSitterPhotos,
-    uploadSitterPhoto
+    uploadSitterPhoto,
+    getPublicSitterPhotos
 } from "@/controllers/sitter.controller";
 
 const sitterRoutes = new Hono();
@@ -20,6 +21,7 @@ sitterRoutes.get("/services", getSitterServices);
 sitterRoutes.get("/search", getSittersInRadius);
 sitterRoutes.get("/manual-search", getSittersByArea);
 sitterRoutes.get("/photos", getSitterPhotos);
+sitterRoutes.get("/photos/:sitterId", getPublicSitterPhotos);
 // POST
 sitterRoutes.post("/profile", createSitterProfile);
 sitterRoutes.post("/photos", uploadSitterPhoto);
