@@ -292,6 +292,13 @@ export const findSittersByArea = async (
             address: petSitterTable.address,
             area: petSitterTable.area,
             location: petSitterTable.location,
+            // Pet preferences for frontend filtering
+            acceptsCats: petSitterTable.acceptsCats,
+            acceptsSmallDogs: petSitterTable.acceptsSmallDogs,
+            acceptsLargeDogs: petSitterTable.acceptsLargeDogs,
+            acceptsFish: petSitterTable.acceptsFish,
+            acceptsBirds: petSitterTable.acceptsBirds,
+            acceptsOtherPets: petSitterTable.acceptsOtherPets,
             // From service table
             serviceId: serviceTable.id,
             pricePerDay: serviceTable.pricePerDay,
