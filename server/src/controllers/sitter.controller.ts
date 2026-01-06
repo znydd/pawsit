@@ -441,3 +441,19 @@ export const uploadSitterPhoto = async (c: Context) => {
     }
 };
 
+// Get photos for a specific sitter by ID (public)
+export const getPublicSitterPhotos = async (c: Context) => {
+    const sitterIdStr = c.req.param("sitterId");
+    
+    if (!sitterIdStr) {
+        return c.json({ success: false, message: "Sitter ID is required" }, 400);
+    }
+
+    const sitterId = parseInt(sitterIdStr, 10);
+    if (isNaN(sitterId)) {
+        return c.json({ success: false, message: "Invalid sitter ID" }, 400);
+    }
+
+    const photos = await getSitterPhotosBySitterId(sitterId);
+    return c.json({ success: true, photos });
+};
